@@ -276,11 +276,11 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
       </div>
       <div class="g21">
         <div class="card">
-          <div class="sh"><span class="sh-t">Últimos Gastos</span><button class="sh-btn" onclick="goTo(document.querySelector('[onclick*=gastos]'),'gastos')">Ver todos →</button></div>
+          <div class="sh"><span class="sh-t">Últimos Gastos</span><button class="sh-btn" onclick="navTo('gastos')">Ver todos →</button></div>
           <div id="d-gastos"></div>
         </div>
         <div class="card">
-          <div class="sh"><span class="sh-t">Contas a Vencer</span><button class="sh-btn" onclick="goTo(document.querySelector('[onclick*=ck]'),'ck')">Checklist →</button></div>
+          <div class="sh"><span class="sh-t">Contas a Vencer</span><button class="sh-btn" onclick="navTo('ck')">Checklist →</button></div>
           <div id="d-ck-mini"></div>
         </div>
       </div>
@@ -421,7 +421,7 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
       </div>
       <div class="cat-grid" id="cat-grid"></div>
       <div class="card" id="cat-detalhe" style="display:none">
-        <div class="sh"><span class="sh-t" id="cat-det-title">—</span><button class="sh-btn" onclick="document.getElementById('cat-detalhe').style.display='none'">✕ Fechar</button></div>
+        <div class="sh"><span class="sh-t" id="cat-det-title">—</span><button class="sh-btn" onclick="fecharCatDet()">✕ Fechar</button></div>
         <div id="cat-det-list"></div>
       </div>
     </div>
@@ -820,7 +820,15 @@ function goTo(el,v){
   document.getElementById('pgtitle').textContent=TITLES[v]||v;
   render(v);
 }
-function mNav(el,v){document.querySelectorAll('.bn-item').forEach(b=>b.classList.remove('on'));el.classList.add('on');goTo(document.querySelector('.ni[onclick*="''+v+''"]'),v);window.scrollTo(0,0);}
+function mNav(el,v){
+  document.querySelectorAll('.bn-item').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  const nis=document.querySelectorAll('.ni');
+  let niEl=null;
+  nis.forEach(n=>{if((n.getAttribute('onclick')||'').includes("'"+v+"'"))niEl=n;});
+  goTo(niEl,v);
+  window.scrollTo(0,0);
+}
 function render(v){
   if(v==='dash')rDash();
   if(v==='gastos')rGastos();
@@ -879,7 +887,7 @@ function rDash(){
     const cor=pct>90?'var(--red)':pct>70?'var(--gold)':'var(--green)';
     const hoje=new Date().toISOString().split('T')[0];
     const ativa=hoje>=s.ini&&hoje<=s.fim;
-    return `<div class="sem-box ${ativa?'ativa':''}" onclick="goTo(document.querySelector('[onclick*=sem]'),'sem');setTimeout(()=>setSemN(${s.n}),100)">
+    return `<div class="sem-box ${ativa?'ativa':''}" onclick="navTo('sem');setTimeout(()=>setSemN(${s.n}),100)">
       <div class="sem-lbl">Sem ${s.n}</div>
       <div class="sem-datas">${fd(s.ini)} → ${fd(s.fim)}</div>
       <div class="sem-val">${fmtK(gs)}</div>
@@ -1229,8 +1237,27 @@ function saveTercParc(){const desc=document.getElementById('tp-desc').value.trim
 function toggleSB(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('overlay-bg').classList.toggle('on');}
 function closeSB(){document.getElementById('sidebar').classList.remove('open');document.getElementById('overlay-bg').classList.remove('on');}
 document.querySelectorAll('.ni').forEach(n=>n.addEventListener('click',()=>{if(window.innerWidth<=768)closeSB();}));
-if(/iphone|ipad|ipod/i.test(navigator.userAgent)&&!navigator.standalone&&!localStorage.getItem('pwa-ok')){const b=document.createElement('div');b.style.cssText='position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #e0e0e0;padding:14px 18px max(14px,env(safe-area-inset-bottom));z-index:999;display:flex;align-items:center;gap:12px;box-shadow:0 -4px 20px rgba(0,0,0,.1);font-family:DM Sans,sans-serif';b.innerHTML='<div style="font-size:26px">📲</div><div style="flex:1"><div style="font-weight:600;font-size:13px">Instalar GranaFam</div><div style="font-size:11px;color:#7a7468;margin-top:2px">Toque em <strong>Compartilhar ⎙</strong> → <strong>"Adicionar à Tela de Início"</strong></div></div><button onclick="this.parentElement.remove();localStorage.setItem('pwa-ok','1')" style="background:none;border:none;font-size:18px;color:#999;cursor:pointer">✕</button>';document.body.appendChild(b);}
+(function(){
+  if(!(/iphone|ipad|ipod/i.test(navigator.userAgent)) || navigator.standalone || localStorage.getItem('pwa-ok')) return;
+  var b=document.createElement('div');
+  b.style.cssText='position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #e0e0e0;padding:14px 18px;z-index:999;display:flex;align-items:center;gap:12px;font-family:sans-serif';
+  var icon=document.createElement('span'); icon.textContent='📲'; icon.style.fontSize='26px';
+  var txt=document.createElement('div'); txt.style.flex='1';
+  txt.innerHTML='<div style="font-weight:600;font-size:13px">Instalar GranaFam</div><div style="font-size:11px;color:#7a7468">Compartilhar ⎙ → Adicionar à Tela de Início</div>';
+  var btn=document.createElement('button'); btn.textContent='✕'; btn.style.cssText='background:none;border:none;font-size:18px;cursor:pointer';
+  btn.addEventListener('click',function(){b.remove();localStorage.setItem('pwa-ok','1');});
+  b.appendChild(icon); b.appendChild(txt); b.appendChild(btn);
+  document.body.appendChild(b);
+})();
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+
+// ── HELPERS NAV ──────────────────────────────────────────────────────────────
+function navTo(v){
+  var nis=document.querySelectorAll('.ni'), el=null;
+  nis.forEach(function(n){if((n.getAttribute('onclick')||'').indexOf("'"+v+"'")>=0)el=n;});
+  goTo(el,v);
+}
+function fecharCatDet(){document.getElementById('cat-detalhe').style.display='none';}
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 CM=6; CY=2026;
