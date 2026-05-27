@@ -301,16 +301,25 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
       </div>
       <input class="search" placeholder="Buscar gasto..." oninput="filtGastos(this.value)" id="g-search">
       <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
-        <div class="filters" id="g-filters" style="margin-bottom:0">
-          <div class="ftag on" onclick="setGF(this,'all')">Todas categorias</div>
-          <div class="ftag" onclick="setGF(this,'alimentacao')">Alimentação</div>
-          <div class="ftag" onclick="setGF(this,'mercado')">Mercado</div>
-          <div class="ftag" onclick="setGF(this,'transporte')">Transporte</div>
-          <div class="ftag" onclick="setGF(this,'saude')">Saúde</div>
-          <div class="ftag" onclick="setGF(this,'julia')">Júlia</div>
-          <div class="ftag" onclick="setGF(this,'moradia')">Casa</div>
-          <div class="ftag" onclick="setGF(this,'assinatura')">Assinatura</div>
-          <div class="ftag" onclick="setGF(this,'outro')">Outros</div>
+        <div class="filters" id="g-filters" style="margin-bottom:0;flex-wrap:wrap">
+          <div class="ftag on" onclick="setGF(this,'all')">Todas</div>
+          <div class="ftag" onclick="setGF(this,'supermercado')">🛒 Mercado</div>
+          <div class="ftag" onclick="setGF(this,'alimentacao')">🍽️ Alimentação</div>
+          <div class="ftag" onclick="setGF(this,'alim_trabalho')">🥗 Trab.</div>
+          <div class="ftag" onclick="setGF(this,'combustivel')">⛽ Combustível</div>
+          <div class="ftag" onclick="setGF(this,'remedios')">💉 Remédios</div>
+          <div class="ftag" onclick="setGF(this,'diarista')">🧹 Diarista</div>
+          <div class="ftag" onclick="setGF(this,'farmacia')">💊 Farmácia</div>
+          <div class="ftag" onclick="setGF(this,'uber')">🚗 Uber</div>
+          <div class="ftag" onclick="setGF(this,'estacionamento')">🅿️ Estac.</div>
+          <div class="ftag" onclick="setGF(this,'diversao')">🎉 Diversão</div>
+          <div class="ftag" onclick="setGF(this,'presentes')">🎁 Presentes</div>
+          <div class="ftag" onclick="setGF(this,'viagem')">✈️ Viagem</div>
+          <div class="ftag" onclick="setGF(this,'cuidados')">💆 Pessoal</div>
+          <div class="ftag" onclick="setGF(this,'roupas_thiago')">👔 Thiago</div>
+          <div class="ftag" onclick="setGF(this,'roupas_nataly')">👗 Nataly</div>
+          <div class="ftag" onclick="setGF(this,'julia_roupas')">👚 Júlia</div>
+          <div class="ftag" onclick="setGF(this,'outros')">📦 Outros</div>
         </div>
         <div class="filters" id="g-cart-filters" style="margin-bottom:0">
           <div class="ftag on" onclick="setGFC(this,'all')">Todos os cartões</div>
@@ -525,16 +534,30 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
     </div>
     <div class="fg"><label class="flbl">Categoria</label>
       <select class="fsel" id="g-cat">
+        <option value="supermercado">🛒 Supermercado</option>
         <option value="alimentacao">🍽️ Alimentação</option>
-        <option value="mercado">🛒 Mercado</option>
-        <option value="transporte">🚗 Transporte/Combustível</option>
-        <option value="saude">🏥 Saúde/Farmácia</option>
-        <option value="julia">🎀 Júlia</option>
-        <option value="moradia">🏠 Casa</option>
-        <option value="assinatura">📱 Assinatura</option>
-        <option value="educacao">📚 Educação</option>
-        <option value="lazer">🎭 Lazer</option>
-        <option value="outro">📦 Outros</option>
+        <option value="alim_trabalho">🥗 Alimentação - Trabalho</option>
+        <option value="farmacia">💊 Farmácia - Diversos</option>
+        <option value="combustivel">⛽ Combustível</option>
+        <option value="remedios">💉 Remédios</option>
+        <option value="diarista">🧹 Diarista</option>
+        <option value="uber">🚗 Uber</option>
+        <option value="estacionamento">🅿️ Estacionamento</option>
+        <option value="limpeza_carro">🚿 Limpeza do Carro</option>
+        <option value="diversao">🎉 Diversão da Família</option>
+        <option value="itens_casa">🏠 Itens para Casa</option>
+        <option value="presentes">🎁 Presentes Diversos</option>
+        <option value="cuidados">💆 Cuidados Pessoais</option>
+        <option value="viagem">✈️ Gastos Viagem</option>
+        <option value="metro">🚇 Metrô</option>
+        <option value="roupas_thiago">👔 Roupas - Thiago</option>
+        <option value="roupas_nataly">👗 Roupas - Nataly</option>
+        <option value="julia_roupas">👚 Júlia - Roupas</option>
+        <option value="julia_brinquedos">🧸 Júlia - Brinquedos</option>
+        <option value="julia_remedios">💊 Júlia - Remédios</option>
+        <option value="julia_lazer">🎡 Júlia - Lazer</option>
+        <option value="julia_outros">🎀 Júlia - Outros</option>
+        <option value="outros">📦 Outros</option>
       </select>
     </div>
     <div class="fg"><label class="flbl">Cartão / Conta</label>
@@ -710,14 +733,36 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
 </div>
 
 <script>
-const DATA_VERSION = '2026-07-v5';
+const DATA_VERSION = '2026-07-v6';
 
 
 const MNS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const MSH = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 const MSHH = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
-const CCAT = {alimentacao:'#2d7a4f',mercado:'#2d7a4f',transporte:'#a07c20',moradia:'#2b6cb0',saude:'#7c3aed',assinatura:'#be185d',lazer:'#c2410c',educacao:'#0891b2',julia:'#e879a0',outro:'#7a7468',receita:'#2d7a4f'};
-const ICOS = {alimentacao:'🍽️',mercado:'🛒',transporte:'🚗',moradia:'🏠',saude:'🏥',assinatura:'📱',lazer:'🎭',educacao:'📚',julia:'🎀',outro:'📦',receita:'💰'};
+const CCAT = {
+  supermercado:'#2d7a4f',alimentacao:'#2d7a4f',alim_trabalho:'#4a9e6a',
+  farmacia:'#7c3aed',combustivel:'#a07c20',remedios:'#7c3aed',diarista:'#2b6cb0',
+  uber:'#a07c20',estacionamento:'#a07c20',limpeza_carro:'#0891b2',
+  diversao:'#c2410c',itens_casa:'#2b6cb0',presentes:'#e879a0',
+  cuidados:'#be185d',viagem:'#0891b2',metro:'#0891b2',
+  roupas_thiago:'#374151',roupas_nataly:'#be185d',
+  julia_roupas:'#e879a0',julia_brinquedos:'#f59e0b',julia_remedios:'#7c3aed',
+  julia_lazer:'#c2410c',julia_outros:'#e879a0',
+  outros:'#7a7468',moradia:'#2b6cb0',assinatura:'#be185d',
+  lazer:'#c2410c',educacao:'#0891b2',receita:'#2d7a4f'
+};
+const ICOS = {
+  supermercado:'🛒',alimentacao:'🍽️',alim_trabalho:'🥗',
+  farmacia:'💊',combustivel:'⛽',remedios:'💉',diarista:'🧹',
+  uber:'🚗',estacionamento:'🅿️',limpeza_carro:'🚿',
+  diversao:'🎉',itens_casa:'🏠',presentes:'🎁',
+  cuidados:'💆',viagem:'✈️',metro:'🚇',
+  roupas_thiago:'👔',roupas_nataly:'👗',
+  julia_roupas:'👚',julia_brinquedos:'🧸',julia_remedios:'💊',
+  julia_lazer:'🎡',julia_outros:'🎀',
+  outros:'📦',moradia:'🏠',assinatura:'📱',
+  lazer:'🎭',educacao:'📚',receita:'💰'
+};
 const TITLES = {dash:'Visão Geral',gastos:'Gastos do Mês',ck:'Checklist de Pagamentos',sem:'Gastos Semanais',fixos:'Gastos Fixos',emp:'Empréstimos e Financiamentos',parc:'Parcelas',terc:'Gastos de Terceiros',cat:'Categorias',ag:'Acompanhamento Geral',cartao:'Visão por Cartão'};
 let CM=6, CY=2026, CW=1;
 
@@ -848,10 +893,10 @@ let S = {
     {id:6,desc:'Lightroom',val:8.5,cat:'assinatura',variavel:false,meio:'Cartão de crédito'},
     {id:7,desc:'Spotify',val:30.0,cat:'assinatura',variavel:false,meio:'Cartão de crédito'},
     {id:8,desc:'Telefone',val:79.8,cat:'moradia',variavel:false,meio:'Cartão de crédito'},
-    {id:9,desc:'Combustível',val:700.0,cat:'transporte',variavel:true,meio:'Cartão de crédito'},
+    {id:9,desc:'Combustível',val:700.0,cat:'transporte',variavel:true,meio:'Cartão de crédito',consumivel:'combustivel'},
     {id:10,desc:'Xbox',val:36.0,cat:'assinatura',variavel:false,meio:'Cartão de crédito'},
     {id:11,desc:'Fotoclube',val:39.8,cat:'assinatura',variavel:false,meio:'Cartão de crédito'},
-    {id:12,desc:'Remédios',val:1200.0,cat:'saude',variavel:true,meio:'Cartão de crédito'},
+    {id:12,desc:'Remédios',val:1200.0,cat:'saude',variavel:true,meio:'Cartão de crédito',consumivel:'remedios'},
     {id:13,desc:'Estácio',val:120.0,cat:'educacao',variavel:false,meio:'Cartão de crédito'},
     {id:25,desc:'Meli +',val:19.9,cat:'assinatura',variavel:false,meio:'Cartão de crédito'}
   ]),
@@ -864,7 +909,7 @@ let S = {
     {id:19,desc:'Creche',val:1018.0,cat:'educacao',variavel:false,meio:'Débito em conta'},
     {id:20,desc:'INSS Nataly',val:400.0,cat:'outro',variavel:false,meio:'Débito em conta'},
     {id:21,desc:'Coparticipação',val:600.0,cat:'saude',variavel:true,meio:'Débito em conta'},
-    {id:22,desc:'Diarista',val:720.0,cat:'moradia',variavel:false,meio:'Débito em conta'},
+    {id:22,desc:'Diarista',val:720.0,cat:'moradia',variavel:false,meio:'Débito em conta',consumivel:'diarista'},
     {id:23,desc:'Seguro residencial',val:37.9,cat:'moradia',variavel:false,meio:'Débito em conta'},
     {id:24,desc:'IPTV',val:30.0,cat:'assinatura',variavel:false,meio:'Débito em conta'},
     {id:25,desc:'Plano de Saúde',val:523.0,cat:'saude',variavel:false,meio:'Desconto em folha',descontadoFolha:true}
@@ -1001,9 +1046,36 @@ function getRendaExtra(m1){
   },0);
 }
 
+function getGastosCategoria(cats, m1){
+  // Soma gastos de categorias consumíveis dentro do ciclo do mês
+  const ciclo=getCiclo(m1)||getCiclo(m1-1)||{ini:'2000-01-01',fim:'2999-01-01'};
+  return S.gastos.filter(g=>cats.includes(g.cat)&&g.data>=ciclo.ini&&g.data<=ciclo.fim)
+    .reduce((a,g)=>a+(g.val||0),0);
+}
+
 function calcTotais(m1){
-  const tFixCart=S.fixosCart.filter(f=>!f.descontadoFolha).reduce((a,f)=>a+(f.val||0),0);
-  const tFixConta=S.fixosConta.filter(f=>!f.descontadoFolha).reduce((a,f)=>a+(f.val||0),0);
+  // Gastos já lançados das categorias consumíveis
+  const gCombustivel = getGastosCategoria(['combustivel'], m1);
+  const gRemedios    = getGastosCategoria(['remedios'], m1);
+  const gDiarista    = getGastosCategoria(['diarista'], m1);
+
+  // Para fixos consumíveis: provisão = max(0, fixo - já lançado)
+  // Isso evita dupla contagem: se já lançou 150 de combustível,
+  // só provisiona os 550 restantes
+  const ajusteFixCart = S.fixosCart.filter(f=>!f.descontadoFolha).reduce((a,f)=>{
+    let val = f.val||0;
+    if(f.consumivel === 'combustivel') val = Math.max(0, val - gCombustivel);
+    if(f.consumivel === 'remedios')    val = Math.max(0, val - gRemedios);
+    return a + val;
+  }, 0);
+  const ajusteFixConta = S.fixosConta.filter(f=>!f.descontadoFolha).reduce((a,f)=>{
+    let val = f.val||0;
+    if(f.consumivel === 'diarista') val = Math.max(0, val - gDiarista);
+    return a + val;
+  }, 0);
+
+  const tFixCart=ajusteFixCart;
+  const tFixConta=ajusteFixConta;
   const tFixos=tFixCart+tFixConta;
   const tEmp=S.emprestimos.filter(e=>!e.consignado).reduce((a,e)=>a+(e.parcela||0),0);
   const tParcs=S.parcs.reduce((a,p)=>{
