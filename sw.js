@@ -1,5 +1,5 @@
 // Mude este número toda vez que fizer uma atualização
-const CACHE_VERSION = 'granafam-v6';
+const CACHE_VERSION = 'granafam-v7';
 const ASSETS = [
   '/granafam/',
   '/granafam/index.html',
