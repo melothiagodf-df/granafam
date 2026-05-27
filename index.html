@@ -142,6 +142,12 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
 .terc-pessoa-total{font-family:'DM Mono',monospace;font-size:12px;color:rgba(255,255,255,.6)}
 .terc-body{border:1px solid var(--border);border-top:none;border-radius:0 0 6px 6px}
 .tbl{width:100%;border-collapse:collapse;font-size:13px}
+.accordion-toggle{cursor:pointer;user-select:none}
+.accordion-toggle:hover{background:var(--warm)!important}
+.accordion-rows{transition:opacity .2s}
+.accordion-rows.hidden{display:none}
+.toggle-ico{display:inline-block;transition:transform .2s;margin-right:6px;font-style:normal}
+.toggle-ico.open{transform:rotate(90deg)}
 .tbl th{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:.8px;text-transform:uppercase;padding:7px 12px;background:var(--s2);border-bottom:1px solid var(--border);text-align:left;font-weight:500}
 .tbl th.r{text-align:right}
 .tbl td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
@@ -151,7 +157,8 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
 .fixos-tbl{width:100%;border-collapse:collapse;font-size:13px}
 .fixos-tbl th{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:.8px;text-transform:uppercase;padding:7px 10px;background:var(--s2);border:1px solid var(--border);text-align:left;font-weight:500}
 .fixos-tbl td{padding:8px 10px;border:1px solid var(--border);vertical-align:middle}
-.fi-edit{background:none;border:none;border-bottom:1.5px solid transparent;color:var(--ink);font-family:'DM Mono',monospace;font-size:12px;width:90px;outline:none;transition:border-color .2s;padding:2px 0;text-align:right}
+.fi-edit{background:none;border:none;border-bottom:1.5px solid transparent;color:var(--ink);font-family:'DM Mono',monospace;font-size:12px;width:100%;outline:none;transition:border-color .2s;padding:2px 0}
+.fi-edit-val{width:90px;text-align:right}
 .fi-edit:focus{border-bottom-color:var(--ink)}
 .var-badge{font-size:9px;padding:1px 6px;border-radius:10px;background:var(--yellow-bg, #fef3e2);color:var(--gold);border:1px solid #e8d48a;font-family:'DM Mono',monospace}
 .overlay{display:none;position:fixed;inset:0;background:rgba(15,14,12,.55);z-index:300;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
@@ -229,6 +236,7 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
     <div class="ni" onclick="goTo(this,'emp')"><span class="ic">🏦</span> Empréstimos</div>
     <div class="ni" onclick="goTo(this,'parc')"><span class="ic">⊟</span> Parcelas</div>
     <div class="ni" onclick="goTo(this,'terc')"><span class="ic">👥</span> Gastos de Terceiros</div>
+    <div class="ni" onclick="goTo(this,'cartao')"><span class="ic">💳</span> Visão por Cartão</div>
     <div class="ns">Análise</div>
     <div class="ni" onclick="goTo(this,'cat')"><span class="ic">◎</span> Categorias</div>
     <div class="ni" onclick="goTo(this,'ag')"><span class="ic">▤</span> Acomp. Geral</div>
@@ -466,6 +474,35 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
     </div>
 
   </div>
+
+    <!-- VISÃO POR CARTÃO -->
+    <div id="v-cartao" class="view">
+      <div class="filters" id="cartao-select" style="margin-bottom:20px">
+        <div class="ftag on" onclick="setCartaoV(this,'BRB Black')">BRB Black</div>
+        <div class="ftag" onclick="setCartaoV(this,'Itaú Azul')">Itaú Azul</div>
+        <div class="ftag" onclick="setCartaoV(this,'Nubank')">Nubank</div>
+        <div class="ftag" onclick="setCartaoV(this,'Inter')">Inter</div>
+        <div class="ftag" onclick="setCartaoV(this,'Mercado Pago')">Mercado Pago</div>
+        <div class="ftag" onclick="setCartaoV(this,'Renner')">Renner</div>
+      </div>
+      <div class="g4" id="cartao-kpis" style="margin-bottom:16px"></div>
+      <div class="g2">
+        <div class="card">
+          <div class="sh"><span class="sh-t" id="cartao-gastos-title">Gastos no ciclo</span></div>
+          <div id="cartao-gastos-list"></div>
+        </div>
+        <div class="card">
+          <div class="sh"><span class="sh-t" id="cartao-parc-title">Parcelas ativas</span></div>
+          <div id="cartao-parc-list"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="sh"><span class="sh-t">Fixos neste cartão</span></div>
+        <div id="cartao-fixos-list"></div>
+      </div>
+    </div>
+
+  </div>
 </div>
 
 <div class="overlay-bg" id="overlay-bg" onclick="closeSB()"></div>
@@ -673,7 +710,7 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
 </div>
 
 <script>
-const DATA_VERSION = '2026-07-v2';
+const DATA_VERSION = '2026-07-v3';
 
 
 const MNS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
@@ -681,7 +718,7 @@ const MSH = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','
 const MSHH = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
 const CCAT = {alimentacao:'#2d7a4f',mercado:'#2d7a4f',transporte:'#a07c20',moradia:'#2b6cb0',saude:'#7c3aed',assinatura:'#be185d',lazer:'#c2410c',educacao:'#0891b2',julia:'#e879a0',outro:'#7a7468',receita:'#2d7a4f'};
 const ICOS = {alimentacao:'🍽️',mercado:'🛒',transporte:'🚗',moradia:'🏠',saude:'🏥',assinatura:'📱',lazer:'🎭',educacao:'📚',julia:'🎀',outro:'📦',receita:'💰'};
-const TITLES = {dash:'Visão Geral',gastos:'Gastos do Mês',ck:'Checklist de Pagamentos',sem:'Gastos Semanais',fixos:'Gastos Fixos',emp:'Empréstimos e Financiamentos',parc:'Parcelas',terc:'Gastos de Terceiros',cat:'Categorias',ag:'Acompanhamento Geral'};
+const TITLES = {dash:'Visão Geral',gastos:'Gastos do Mês',ck:'Checklist de Pagamentos',sem:'Gastos Semanais',fixos:'Gastos Fixos',emp:'Empréstimos e Financiamentos',parc:'Parcelas',terc:'Gastos de Terceiros',cat:'Categorias',ag:'Acompanhamento Geral',cartao:'Visão por Cartão'};
 let CM=6, CY=2026, CW=1;
 
 function showSyncStatus(ok) {
@@ -749,60 +786,60 @@ function resetLocal(){
 let S = {
   renda: ld('renda',{t:8500,n:8000,e:0}),
   gastos: ld('gastos', [
-    {id:100,data:'2026-05-24',desc:'Carrefour Hac',val:100.44,cat:'mercado'},
-    {id:101,data:'2026-05-24',desc:'Ciatoy 14',val:29.0,cat:'julia'},
-    {id:102,data:'2026-05-24',desc:'R3bomboniereltda',val:4.9,cat:'alimentacao'},
-    {id:103,data:'2026-05-24',desc:'Divino Fogao',val:90.98,cat:'alimentacao'},
-    {id:104,data:'2026-05-24',desc:'Padano Padaria E Confe',val:14.92,cat:'alimentacao'},
-    {id:105,data:'2026-05-24',desc:'Dona Aguas Claras 2',val:45.57,cat:'mercado'},
-    {id:106,data:'2026-05-24',desc:'Pd Paes E Delicias Com',val:6.95,cat:'alimentacao'},
-    {id:107,data:'2026-05-24',desc:'Atacadao Dia A Dia',val:160.28,cat:'mercado'},
-    {id:108,data:'2026-05-23',desc:'Easymarket',val:11.53,cat:'mercado'},
-    {id:109,data:'2026-05-23',desc:'Line Bakery',val:43.0,cat:'alimentacao'},
-    {id:110,data:'2026-05-23',desc:'Allpark Empreendimento',val:9.0,cat:'transporte'},
-    {id:111,data:'2026-05-23',desc:'Hora De Ler',val:25.0,cat:'julia'},
-    {id:112,data:'2026-05-23',desc:'Fonte De Vida Polpa De',val:43.2,cat:'mercado'},
-    {id:113,data:'2026-05-23',desc:'Dunkin Donuts',val:28.8,cat:'alimentacao'},
-    {id:114,data:'2026-05-23',desc:'Posto San Remo',val:10.0,cat:'transporte'},
-    {id:115,data:'2026-05-23',desc:'Line Bakery',val:27.0,cat:'alimentacao'},
-    {id:116,data:'2026-05-22',desc:'Zig*mane Mercado Bsb',val:19.9,cat:'alimentacao'},
-    {id:117,data:'2026-05-22',desc:'Allpark Empreendimento',val:12.0,cat:'transporte'},
-    {id:118,data:'2026-05-22',desc:'Zig*mane Mercado Bsb',val:98.02,cat:'alimentacao'},
-    {id:119,data:'2026-05-21',desc:'Dunkin Donuts',val:19.2,cat:'alimentacao'},
-    {id:120,data:'2026-05-21',desc:'Drogaria Rosario',val:38.32,cat:'saude'},
-    {id:121,data:'2026-05-20',desc:'L2 Estacionamento',val:10.0,cat:'transporte'},
-    {id:122,data:'2026-05-20',desc:'Adriana Dos Santos Le',val:6.0,cat:'alimentacao'},
-    {id:123,data:'2026-05-18',desc:'Sorvetes Maranatha',val:18.16,cat:'alimentacao'},
-    {id:124,data:'2026-05-18',desc:'Brb Mobilida*bus 1003',val:5.5,cat:'transporte'},
-    {id:125,data:'2026-05-18',desc:'Brb Mobilida*bus 1600',val:5.5,cat:'transporte'},
-    {id:126,data:'2026-05-18',desc:'Drogasil 1387',val:41.28,cat:'saude'},
-    {id:127,data:'2026-05-17',desc:'Mp *Paraibinhas',val:26.0,cat:'alimentacao'},
-    {id:128,data:'2026-05-17',desc:'Mp *Mpmarceloroch',val:9.0,cat:'alimentacao'},
-    {id:129,data:'2026-05-16',desc:'Easymarket',val:11.53,cat:'mercado'},
-    {id:130,data:'2026-05-16',desc:'Big Box Supermercados',val:22.01,cat:'mercado'},
-    {id:131,data:'2026-05-16',desc:'Armazemdabebida',val:55.28,cat:'alimentacao'},
-    {id:132,data:'2026-05-16',desc:'Line Bakery',val:18.0,cat:'alimentacao'},
-    {id:133,data:'2026-05-15',desc:'Feijuca No Balde',val:53.35,cat:'alimentacao'},
-    {id:134,data:'2026-05-15',desc:'Washboxaguas',val:89.9,cat:'transporte'},
-    {id:135,data:'2026-05-14',desc:'Auto Posto Eptg',val:287.23,cat:'transporte'},
-    {id:136,data:'2026-05-14',desc:'Rei Do Mate',val:41.9,cat:'alimentacao'},
-    {id:137,data:'2026-05-14',desc:'Ifd*drogaria Rosario S',val:157.88,cat:'saude'},
-    {id:138,data:'2026-05-13',desc:'Estac Shopping',val:28.0,cat:'transporte'},
-    {id:139,data:'2026-05-13',desc:'Kimmiso',val:21.98,cat:'moradia'},
-    {id:140,data:'2026-05-13',desc:'American Cookies Parks',val:43.0,cat:'alimentacao'},
-    {id:141,data:'2026-05-12',desc:'Le Quartier',val:11.25,cat:'transporte'},
-    {id:142,data:'2026-05-12',desc:'Iof Transacoes Exterior R$',val:3.85,cat:'outro'},
-    {id:143,data:'2026-05-12',desc:'Claude.ai Subscription',val:110.0,cat:'assinatura'},
-    {id:144,data:'2026-05-11',desc:'Posto208sul',val:100.0,cat:'transporte'},
-    {id:145,data:'2026-05-10',desc:'Line Bakery',val:18.0,cat:'alimentacao'},
-    {id:146,data:'2026-05-10',desc:'Bolos Do Flavio Posto',val:26.0,cat:'alimentacao'},
-    {id:147,data:'2026-05-09',desc:'Easymarket',val:5.98,cat:'mercado'},
-    {id:148,data:'2026-05-09',desc:'Allpark Empreendimento',val:9.0,cat:'transporte'},
-    {id:149,data:'2026-05-09',desc:'Cacau Show',val:24.95,cat:'alimentacao'},
-    {id:150,data:'2026-05-08',desc:'Lisdamas',val:167.45,cat:'outro'},
-    {id:151,data:'2026-05-08',desc:'One Park',val:31.15,cat:'transporte'},
-    {id:152,data:'2026-05-08',desc:'Medceu Servicos',val:40.0,cat:'transporte'},
-    {id:153,data:'2026-05-08',desc:'Ifd*gabriel Lopes Amar',val:27.98,cat:'alimentacao'}
+    {id:100,data:'2026-05-24',desc:'Carrefour Hac',val:100.44,cat:'mercado',cart:'BRB Black'},
+    {id:101,data:'2026-05-24',desc:'Ciatoy 14',val:29.0,cat:'julia',cart:'BRB Black'},
+    {id:102,data:'2026-05-24',desc:'R3bomboniereltda',val:4.9,cat:'alimentacao',cart:'BRB Black'},
+    {id:103,data:'2026-05-24',desc:'Divino Fogao',val:90.98,cat:'alimentacao',cart:'BRB Black'},
+    {id:104,data:'2026-05-24',desc:'Padano Padaria E Confe',val:14.92,cat:'alimentacao',cart:'BRB Black'},
+    {id:105,data:'2026-05-24',desc:'Dona Aguas Claras 2',val:45.57,cat:'mercado',cart:'BRB Black'},
+    {id:106,data:'2026-05-24',desc:'Pd Paes E Delicias Com',val:6.95,cat:'alimentacao',cart:'BRB Black'},
+    {id:107,data:'2026-05-24',desc:'Atacadao Dia A Dia',val:160.28,cat:'mercado',cart:'BRB Black'},
+    {id:108,data:'2026-05-23',desc:'Easymarket',val:11.53,cat:'mercado',cart:'BRB Black'},
+    {id:109,data:'2026-05-23',desc:'Line Bakery',val:43.0,cat:'alimentacao',cart:'BRB Black'},
+    {id:110,data:'2026-05-23',desc:'Allpark Empreendimento',val:9.0,cat:'transporte',cart:'BRB Black'},
+    {id:111,data:'2026-05-23',desc:'Hora De Ler',val:25.0,cat:'julia',cart:'BRB Black'},
+    {id:112,data:'2026-05-23',desc:'Fonte De Vida Polpa De',val:43.2,cat:'mercado',cart:'BRB Black'},
+    {id:113,data:'2026-05-23',desc:'Dunkin Donuts',val:28.8,cat:'alimentacao',cart:'BRB Black'},
+    {id:114,data:'2026-05-23',desc:'Posto San Remo',val:10.0,cat:'transporte',cart:'BRB Black'},
+    {id:115,data:'2026-05-23',desc:'Line Bakery',val:27.0,cat:'alimentacao',cart:'BRB Black'},
+    {id:116,data:'2026-05-22',desc:'Zig*mane Mercado Bsb',val:19.9,cat:'alimentacao',cart:'BRB Black'},
+    {id:117,data:'2026-05-22',desc:'Allpark Empreendimento',val:12.0,cat:'transporte',cart:'BRB Black'},
+    {id:118,data:'2026-05-22',desc:'Zig*mane Mercado Bsb',val:98.02,cat:'alimentacao',cart:'BRB Black'},
+    {id:119,data:'2026-05-21',desc:'Dunkin Donuts',val:19.2,cat:'alimentacao',cart:'BRB Black'},
+    {id:120,data:'2026-05-21',desc:'Drogaria Rosario',val:38.32,cat:'saude',cart:'BRB Black'},
+    {id:121,data:'2026-05-20',desc:'L2 Estacionamento',val:10.0,cat:'transporte',cart:'BRB Black'},
+    {id:122,data:'2026-05-20',desc:'Adriana Dos Santos Le',val:6.0,cat:'alimentacao',cart:'BRB Black'},
+    {id:123,data:'2026-05-18',desc:'Sorvetes Maranatha',val:18.16,cat:'alimentacao',cart:'BRB Black'},
+    {id:124,data:'2026-05-18',desc:'Brb Mobilida*bus 1003',val:5.5,cat:'transporte',cart:'BRB Black'},
+    {id:125,data:'2026-05-18',desc:'Brb Mobilida*bus 1600',val:5.5,cat:'transporte',cart:'BRB Black'},
+    {id:126,data:'2026-05-18',desc:'Drogasil 1387',val:41.28,cat:'saude',cart:'BRB Black'},
+    {id:127,data:'2026-05-17',desc:'Mp *Paraibinhas',val:26.0,cat:'alimentacao',cart:'BRB Black'},
+    {id:128,data:'2026-05-17',desc:'Mp *Mpmarceloroch',val:9.0,cat:'alimentacao',cart:'BRB Black'},
+    {id:129,data:'2026-05-16',desc:'Easymarket',val:11.53,cat:'mercado',cart:'BRB Black'},
+    {id:130,data:'2026-05-16',desc:'Big Box Supermercados',val:22.01,cat:'mercado',cart:'BRB Black'},
+    {id:131,data:'2026-05-16',desc:'Armazemdabebida',val:55.28,cat:'alimentacao',cart:'BRB Black'},
+    {id:132,data:'2026-05-16',desc:'Line Bakery',val:18.0,cat:'alimentacao',cart:'BRB Black'},
+    {id:133,data:'2026-05-15',desc:'Feijuca No Balde',val:53.35,cat:'alimentacao',cart:'BRB Black'},
+    {id:134,data:'2026-05-15',desc:'Washboxaguas',val:89.9,cat:'transporte',cart:'BRB Black'},
+    {id:135,data:'2026-05-14',desc:'Auto Posto Eptg',val:287.23,cat:'transporte',cart:'BRB Black'},
+    {id:136,data:'2026-05-14',desc:'Rei Do Mate',val:41.9,cat:'alimentacao',cart:'BRB Black'},
+    {id:137,data:'2026-05-14',desc:'Ifd*drogaria Rosario S',val:157.88,cat:'saude',cart:'BRB Black'},
+    {id:138,data:'2026-05-13',desc:'Estac Shopping',val:28.0,cat:'transporte',cart:'BRB Black'},
+    {id:139,data:'2026-05-13',desc:'Kimmiso',val:21.98,cat:'moradia',cart:'BRB Black'},
+    {id:140,data:'2026-05-13',desc:'American Cookies Parks',val:43.0,cat:'alimentacao',cart:'BRB Black'},
+    {id:141,data:'2026-05-12',desc:'Le Quartier',val:11.25,cat:'transporte',cart:'BRB Black'},
+    {id:142,data:'2026-05-12',desc:'Iof Transacoes Exterior R$',val:3.85,cat:'outro',cart:'BRB Black'},
+    {id:143,data:'2026-05-12',desc:'Claude.ai Subscription',val:110.0,cat:'assinatura',cart:'BRB Black'},
+    {id:144,data:'2026-05-11',desc:'Posto208sul',val:100.0,cat:'transporte',cart:'BRB Black'},
+    {id:145,data:'2026-05-10',desc:'Line Bakery',val:18.0,cat:'alimentacao',cart:'BRB Black'},
+    {id:146,data:'2026-05-10',desc:'Bolos Do Flavio Posto',val:26.0,cat:'alimentacao',cart:'BRB Black'},
+    {id:147,data:'2026-05-09',desc:'Easymarket',val:5.98,cat:'mercado',cart:'BRB Black'},
+    {id:148,data:'2026-05-09',desc:'Allpark Empreendimento',val:9.0,cat:'transporte',cart:'BRB Black'},
+    {id:149,data:'2026-05-09',desc:'Cacau Show',val:24.95,cat:'alimentacao',cart:'BRB Black'},
+    {id:150,data:'2026-05-08',desc:'Lisdamas',val:167.45,cat:'outro',cart:'BRB Black'},
+    {id:151,data:'2026-05-08',desc:'One Park',val:31.15,cat:'transporte',cart:'BRB Black'},
+    {id:152,data:'2026-05-08',desc:'Medceu Servicos',val:40.0,cat:'transporte',cart:'BRB Black'},
+    {id:153,data:'2026-05-08',desc:'Ifd*gabriel Lopes Amar',val:27.98,cat:'alimentacao',cart:'BRB Black'}
   ]),
   fixosCart: ld('fixosCart', [
     {id:1,desc:'Seguro Auto',val:229.43,cat:'transporte',variavel:false,meio:'Cartão de crédito'},
@@ -953,6 +990,7 @@ function render(v){
   if(v==='terc')rTerc();
   if(v==='cat')rCat();
   if(v==='ag')rAg();
+  if(v==='cartao')rCartao();
 }
 function moveMes(d){CM+=d;if(CM>11){CM=0;CY++;}if(CM<0){CM=11;CY--;}document.getElementById('mlabel').textContent=MSHH[CM]+' '+CY;const a=document.querySelector('.ni.on');const vn=a?(a.getAttribute('onclick').match(/'([^']+)'/)||[])[1]:'dash';render(vn);}
 
@@ -1004,9 +1042,18 @@ function rDash(){
   const eD=document.getElementById('d-disp');eD.textContent=fmt(Math.max(t.disp,0));eD.className='c-val '+(t.disp>=0?'g':'r');
   const eS=document.getElementById('d-saldo');eS.textContent=fmt(Math.abs(t.saldo));eS.className='c-val '+(t.saldo>=0?'g':'r');
   document.getElementById('d-saldo-sub').innerHTML=`<span class="${t.saldo>=0?'up':'dn'}">${t.saldo>=0?'↑':'↓'} ${((Math.abs(t.saldo)/renda)*100).toFixed(1)}%</span>`;
-  // Ciclo
-  const ciclo=getCiclo(m1);
-  const sems=getSemanas(m1);
+  // Ciclo — detecta automaticamente o ciclo com gastos recentes
+  let cicloM1=m1;
+  const cicloAtual=getCiclo(m1);
+  // Se não há gastos no ciclo atual, tenta ciclo anterior
+  const temGastosCicloAtual=S.gastos.some(g=>g.data>=cicloAtual.ini&&g.data<=cicloAtual.fim);
+  if(!temGastosCicloAtual && CICLOS[m1-1]){
+    const cicloAnt=getCiclo(m1-1);
+    const temGastosAnt=S.gastos.some(g=>g.data>=cicloAnt.ini&&g.data<=cicloAnt.fim);
+    if(temGastosAnt) cicloM1=m1-1;
+  }
+  const ciclo=getCiclo(cicloM1);
+  const sems=getSemanas(cicloM1);
   document.getElementById('dash-ciclo-lbl').textContent=MNS[CM]+' '+CY;
   document.getElementById('dash-ciclo-datas').textContent=fd(ciclo.ini)+' → '+fd(ciclo.fim);
   const budget=t.disp>0?t.disp/4:0;
@@ -1140,7 +1187,7 @@ function rFixos(){
         ?'<span style="font-size:9px;padding:1px 6px;border-radius:10px;background:#e6f4ee;color:var(--green);border:1px solid #b6dfcc;font-family:DM Mono,monospace">desconto em folha</span>'
         :f.variavel?'<span class="var-badge">variável</span>':'<span style="font-size:11px;color:var(--muted)">fixo</span>';
       const rowStyle=f.descontadoFolha?'opacity:.6':'';
-      return `<tr style="${rowStyle}"><td><input class="fi-edit" value="${f.desc}" onchange="updFixo('${store}',${f.id},'desc',this.value)"></td><td style="font-size:11px;color:var(--muted)">${f.cat}</td><td>${tipoBadge}</td><td style="text-align:right"><input class="fi-edit" type="number" value="${f.val}" step="0.01" onchange="updFixo('${store}',${f.id},'val',this.value)"></td><td><button class="del-btn" onclick="delFixo('${store}',${f.id})">✕</button></td></tr>`;
+      return `<tr style="${rowStyle}"><td><input class="fi-edit" value="${f.desc}" onchange="updFixo('${store}',${f.id},'desc',this.value)"></td><td style="font-size:11px;color:var(--muted)">${f.cat}</td><td>${tipoBadge}</td><td style="text-align:right"><input class="fi-edit fi-edit-val" type="number" value="${f.val}" step="0.01" onchange="updFixo('${store}',${f.id},'val',this.value)"></td><td><button class="del-btn" onclick="delFixo('${store}',${f.id})">✕</button></td></tr>`;
     }).join('');
     h+=`<tr style="border-top:2px solid var(--border)"><td colspan="3" style="font-weight:700;font-size:13px">Total (excl. desconto em folha)</td><td style="text-align:right;font-family:'DM Mono',monospace;font-weight:700;color:var(--red)">${fmt(tot)}</td><td></td></tr></tbody>`;
     document.getElementById(elId).innerHTML=h;
@@ -1336,16 +1383,22 @@ function rAg(){
   }
   const hdrs=`<thead><tr><th style="min-width:180px">Descrição</th>${mlbls.map(m=>`<th style="text-align:right;min-width:90px">${m}</th>`).join('')}</tr></thead>`;
   let rows='';
-  const rN=(desc,vals,cls='')=>`<tr class="${cls}"><td>${desc}</td>${vals.map(v=>`<td style="text-align:right;font-family:'DM Mono',monospace;font-size:11px">${fmt(v)}</td>`).join('')}</tr>`;
-  const rNH=(desc,style)=>`<tr><td colspan="${meses.length+1}" style="background:var(--cream);font-weight:600;font-size:12px;padding:8px 12px;${style||''}">${desc}</td></tr>`;
-  rows+=rNH('Gastos Fixos — Cartão de Crédito');
+  const rN=(desc,vals,cls='',grp='')=>`<tr class="${cls}" data-grp="${grp}"><td>${desc}</td>${vals.map(v=>`<td style="text-align:right;font-family:'DM Mono',monospace;font-size:11px">${fmt(v)}</td>`).join('')}</tr>`;
+  let _grpId=0;
+  const rNH=(desc,style,collapsible=false)=>{
+    if(!collapsible) return `<tr><td colspan="${meses.length+1}" style="background:var(--cream);font-weight:600;font-size:12px;padding:8px 12px;${style||''}">${desc}</td></tr>`;
+    const gid='grp'+(++_grpId);
+    return `<tr class="accordion-toggle" onclick="toggleAg('${gid}',this)"><td colspan="${meses.length+1}" style="background:var(--cream);font-weight:600;font-size:12px;padding:8px 12px;${style||''}"><em class="toggle-ico open">▶</em>${desc}</td></tr>`;
+  };
+  const rNGRP=(grp)=>`data-grp="${grp}"`;
+  const grp1='grp_fixcart'; rows+=rNH('Gastos Fixos — Cartão de Crédito','',true);
   S.fixosCart.forEach(f=>{rows+=rN(f.desc,meses.map(()=>f.val));;});
   rows+=rN('<strong>Total Fixos Cartão</strong>',meses.map(()=>tFixCart));
   rows+=rNH('Gastos Fixos — Débito em Conta');
   S.fixosConta.forEach(f=>{rows+=rN(f.desc,meses.map(()=>f.val));});
   rows+=rN('<strong>Total Fixos Conta</strong>',meses.map(()=>tFixConta));
-  rows+=rNH('Empréstimos e Financiamentos');
-  S.emprestimos.filter(e=>!e.consignado).forEach(e=>{rows+=rN(e.nome,meses.map(()=>e.parcela));});
+  const grp3='grp_emp'; rows+=rNH('Empréstimos e Financiamentos','',true);
+  S.emprestimos.filter(e=>!e.consignado).forEach(e=>{rows+=`<tr data-grp="grp_emp"><td style="padding-left:20px;font-size:12px;color:var(--muted)">${e.nome}</td>${meses.map(()=>`<td style="text-align:right;font-family:'DM Mono',monospace;font-size:11px;color:var(--muted)">${fmt(e.parcela)}</td>`).join('')}</tr>`;});
   rows+=rN('<strong>Total Empréstimos</strong>',meses.map(()=>tEmp));
   rows+=rNH('Parcelas');
   rows+=rN('Total Parcelas',meses.map(m=>parcMes(m)));
@@ -1445,6 +1498,97 @@ function saveRendaExtra(){
 function delRendaExtra(id){
   S.rendaExtra=S.rendaExtra.filter(r=>r.id!==id);
   persist();rAg();rDash();
+}
+
+// ── VISÃO POR CARTÃO ─────────────────────────────────────────────────────────
+let cartaoAtual = 'BRB Black';
+
+function setCartaoV(el, cart){
+  document.querySelectorAll('#cartao-select .ftag').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');
+  cartaoAtual = cart;
+  rCartao();
+}
+
+function rCartao(){
+  const m1 = CM+1;
+  const cart = cartaoAtual;
+
+  // Detecta ciclo com gastos
+  let cicloM1 = m1;
+  const cicloAt = getCiclo(m1);
+  if(!S.gastos.some(g=>g.data>=cicloAt.ini&&g.data<=cicloAt.fim) && CICLOS[m1-1]){
+    const ant = getCiclo(m1-1);
+    if(S.gastos.some(g=>g.data>=ant.ini&&g.data<=ant.fim)) cicloM1 = m1-1;
+  }
+  const ciclo = getCiclo(cicloM1);
+
+  // Gastos do cartão no ciclo
+  const gastos = S.gastos.filter(g=>(g.cart||'')=== cart && g.data>=ciclo.ini && g.data<=ciclo.fim)
+    .sort((a,b)=>b.data.localeCompare(a.data));
+  const totalGastos = gastos.reduce((a,g)=>a+(g.val||0),0);
+
+  // Parcelas ativas do cartão no mês
+  const parcs = S.parcs.filter(p=>{
+    if(p.cart !== cart || !p.mesInicio) return false;
+    const mEnd = p.mesInicio + p.qtdTotal - 1;
+    return m1 >= p.mesInicio && m1 <= mEnd;
+  });
+  const totalParcs = parcs.reduce((a,p)=>a+(p.valParc||0),0);
+
+  // Fixos do cartão
+  const fixos = S.fixosCart.filter(f=>f.cart===cart||!f.cart);
+  const totalFixos = fixos.filter(f=>!f.descontadoFolha).reduce((a,f)=>a+(f.val||0),0);
+
+  const totalFatura = totalGastos + totalParcs + totalFixos;
+
+  // KPIs
+  document.getElementById('cartao-kpis').innerHTML = `
+    <div class="card csm"><div class="c-lbl">Fatura Estimada</div><div class="c-val r">${fmt(totalFatura)}</div><div class="c-sub">Gastos + Parcelas + Fixos</div></div>
+    <div class="card csm"><div class="c-lbl">Gastos Variáveis</div><div class="c-val b">${fmt(totalGastos)}</div><div class="c-sub">${gastos.length} lançamentos</div></div>
+    <div class="card csm"><div class="c-lbl">Parcelas</div><div class="c-val y">${fmt(totalParcs)}</div><div class="c-sub">${parcs.length} parcelas ativas</div></div>
+    <div class="card csm"><div class="c-lbl">Fixos</div><div class="c-val" style="font-size:22px">${fmt(totalFixos)}</div><div class="c-sub">${fixos.length} itens</div></div>
+  `;
+
+  // Lista de gastos
+  document.getElementById('cartao-gastos-title').textContent = `Gastos no ciclo (${fd(ciclo.ini)} → ${fd(ciclo.fim)})`;
+  document.getElementById('cartao-gastos-list').innerHTML = gastos.length
+    ? gastos.map(g=>`<div class="row"><div class="row-l"><div class="ibox">${ICOS[g.cat]||'📦'}</div>
+        <div><div class="r-name">${g.desc}</div><div class="r-meta">${fmtDate(g.data)} · ${g.cat}</div></div></div>
+        <div class="r-val neg">${fmt(g.val)}</div></div>`).join('')
+    : '<div class="empty"><div class="eico">📭</div>Nenhum gasto neste cartão no ciclo</div>';
+
+  // Lista de parcelas
+  document.getElementById('cartao-parc-title').textContent = `Parcelas ativas — ${MNS[CM]} ${CY}`;
+  document.getElementById('cartao-parc-list').innerHTML = parcs.length
+    ? parcs.map(p=>{
+        const parcAtual = m1 - p.mesInicio + 1;
+        const falta = p.valParc * p.qtdRestante;
+        const ulm = p.mesInicio + p.qtdTotal - 1;
+        const ulStr = ulm<=12 ? MSH[ulm-1]+'/26' : MSH[(ulm-1)%12]+'/27';
+        return `<div class="row"><div class="row-l"><div class="ibox">🔄</div>
+          <div><div class="r-name">${p.desc}</div>
+          <div class="r-meta">${parcAtual}/${p.qtdTotal} · até ${ulStr} · falta ${fmt(falta)}</div></div></div>
+          <div class="r-val neg">${fmt(p.valParc)}</div></div>`;
+      }).join('')
+    : '<div class="empty"><div class="eico">✓</div>Sem parcelas ativas</div>';
+
+  // Lista de fixos
+  document.getElementById('cartao-fixos-list').innerHTML = fixos.length
+    ? fixos.map(f=>`<div class="row"><div class="row-l"><div class="ibox">${ICOS[f.cat]||'💳'}</div>
+        <div><div class="r-name">${f.desc}</div>
+        <div class="r-meta">${f.variavel?'variável':'fixo'}${f.descontadoFolha?' · desconto em folha':''}</div></div></div>
+        <div class="r-val ${f.descontadoFolha?'':'neg'}" style="${f.descontadoFolha?'opacity:.5':''}">${fmt(f.val)}</div></div>`).join('')
+    : '<div class="empty">Nenhum fixo neste cartão</div>';
+}
+
+// ── ACCORDION AG ─────────────────────────────────────────────────────────────
+function toggleAg(grpId, headerEl){
+  const ico = headerEl.querySelector('.toggle-ico');
+  const rows = document.querySelectorAll(`tr[data-grp="${grpId}"]`);
+  const isOpen = ico.classList.contains('open');
+  rows.forEach(r=>r.style.display=isOpen?'none':'');
+  ico.classList.toggle('open', !isOpen);
 }
 
 // ── HELPERS NAV ──────────────────────────────────────────────────────────────
