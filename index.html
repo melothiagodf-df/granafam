@@ -10,6 +10,10 @@
 <meta name="apple-mobile-web-app-title" content="GranaFam">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="theme-color" content="#0f0e0c">
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -638,6 +642,28 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
 
 <script>
 const DATA_VERSION = '2026-07-v1';
+
+// ── FIREBASE CONFIG ───────────────────────────────────────────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyCPvz65aVIn9lxIALc4BcOY20PevqXStVA",
+  authDomain: "app-financeiro-6fad9.firebaseapp.com",
+  databaseURL: "https://app-financeiro-6fad9-default-rtdb.firebaseio.com",
+  projectId: "app-financeiro-6fad9",
+  storageBucket: "app-financeiro-6fad9.firebasestorage.app",
+  messagingSenderId: "198432639758",
+  appId: "1:198432639758:web:af27033bb21f7ffd51e55f"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const dbRef = db.ref('granafam');
+
+// Indicador de sync
+let syncPending = false;
+function showSyncStatus(ok) {
+  const dot = document.querySelector('.pulse');
+  if (!dot) return;
+  dot.style.background = ok ? 'var(--green)' : '#f59e0b';
+}
 const MNS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const MSH = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 const MSHH = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
@@ -689,7 +715,13 @@ const fmt=v=>'R$ '+Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,
 const fmtK=v=>{v=Number(v||0);return v>=1000?'R$ '+(v/1000).toFixed(1)+'k':fmt(v);};
 let uid=Date.now();const nid=()=>++uid;
 function toast(m='✓ Salvo'){const t=document.getElementById('toast');t.textContent=m;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2500);}
-function resetDados(){if(!confirm('Resetar todos os dados para o padrão?'))return;['renda','gastos','fixosCart','fixosConta','emprestimos','parcs','cks','tercParcs','tercGastos','rendaExtra','data_version'].forEach(k=>localStorage.removeItem(k));location.reload();}
+function resetDados(){
+  if(!confirm('Resetar todos os dados para o padrão? Isso afeta os dois dispositivos.'))return;
+  dbRef.remove().then(()=>{
+    ['renda','gastos','fixosCart','fixosConta','emprestimos','parcs','cks','tercParcs','tercGastos','rendaExtra','data_version'].forEach(k=>localStorage.removeItem(k));
+    location.reload();
+  });
+}
 
 // ── ESTADO ────────────────────────────────────────────────────────────────────
 let S = {
@@ -865,7 +897,10 @@ let S = {
   rendaExtra: ld('rendaExtra', []),
   // [{id, desc, val, tipo:'mensal'|'unico', mes:null|7..12}]
 };
-function persist(){['renda','gastos','fixosCart','fixosConta','emprestimos','parcs','cks','tercParcs','tercGastos','rendaExtra'].forEach(k=>sv(k,S[k]));}
+function persist(){
+  ['renda','gastos','fixosCart','fixosConta','emprestimos','parcs','cks','tercParcs','tercGastos','rendaExtra'].forEach(k=>sv(k,S[k]));
+  pushToFirebase();
+}
 
 // ── NAVEGAÇÃO ─────────────────────────────────────────────────────────────────
 function goTo(el,v){
@@ -1392,7 +1427,29 @@ function fecharCatDet(){document.getElementById('cat-detalhe').style.display='no
 // ── INIT ──────────────────────────────────────────────────────────────────────
 CM=6; CY=2026;
 document.getElementById('mlabel').textContent='JUL 2026';
-rDash();
+
+// Carrega dados do Firebase na inicialização
+showSyncStatus(false);
+dbRef.once('value').then(snapshot=>{
+  const data = snapshot.val();
+  if(data && data._version === DATA_VERSION){
+    // Dados remotos existem e são compatíveis — usa Firebase
+    const keys=['renda','gastos','fixosCart','fixosConta','emprestimos','parcs','cks','tercParcs','tercGastos','rendaExtra'];
+    keys.forEach(k=>{ if(data[k]!==undefined){ S[k]=data[k]; sv(k,data[k]); } });
+    console.log('✓ Dados carregados do Firebase');
+  } else if(!data){
+    // Firebase vazio — envia dados locais para o Firebase (primeiro uso)
+    console.log('Firebase vazio — enviando dados locais...');
+    pushToFirebase();
+  }
+  showSyncStatus(true);
+  rDash();
+  startFirebaseListener(); // Escuta mudanças em tempo real
+}).catch(e=>{
+  console.warn('Firebase indisponível, usando dados locais:', e);
+  showSyncStatus(false);
+  rDash();
+});
 </script>
 </body>
 </html>
