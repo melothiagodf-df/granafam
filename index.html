@@ -710,7 +710,7 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
 </div>
 
 <script>
-const DATA_VERSION = '2026-07-v3';
+const DATA_VERSION = '2026-07-v4';
 
 
 const MNS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
@@ -773,9 +773,7 @@ let uid=Date.now();const nid=()=>++uid;
 function toast(m='✓ Salvo'){const t=document.getElementById('toast');t.textContent=m;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2500);}
 function resetDados(){
   if(!confirm('Resetar todos os dados para o padrão? Isso afeta os dois dispositivos.'))return;
-  if(typeof dbRef !== 'undefined'){
-    dbRef.remove().then(()=>{ resetLocal(); });
-  } else { resetLocal(); }
+  resetLocal();
 }
 function resetLocal(){
   ['renda','gastos','fixosCart','fixosConta','emprestimos','parcs','cks','tercParcs','tercGastos','rendaExtra','data_version'].forEach(k=>localStorage.removeItem(k));
@@ -1041,7 +1039,7 @@ function rDash(){
   document.getElementById('d-comp').textContent=fmt(t.total);
   const eD=document.getElementById('d-disp');eD.textContent=fmt(Math.max(t.disp,0));eD.className='c-val '+(t.disp>=0?'g':'r');
   const eS=document.getElementById('d-saldo');eS.textContent=fmt(Math.abs(t.saldo));eS.className='c-val '+(t.saldo>=0?'g':'r');
-  document.getElementById('d-saldo-sub').innerHTML=`<span class="${t.saldo>=0?'up':'dn'}">${t.saldo>=0?'↑':'↓'} ${((Math.abs(t.saldo)/renda)*100).toFixed(1)}%</span>`;
+  document.getElementById('d-saldo-sub').innerHTML=`<span class="${t.saldo>=0?'up':'dn'}">${t.saldo>=0?'↑':'↓'} ${((Math.abs(t.saldo)/t.renda)*100).toFixed(1)}%</span>`;
   // Ciclo — detecta automaticamente o ciclo com gastos recentes
   let cicloM1=m1;
   const cicloAtual=getCiclo(m1);
@@ -1606,12 +1604,13 @@ document.getElementById('mlabel').textContent='JUL 2026';
 rDash(); // Firebase carregado no bloco abaixo
 </script>
 
-<!-- ── FIREBASE (bloco separado, carrega após o app principal) ── -->
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
-<script>
+<!-- ── FIREBASE (módulo ESM — não depende de scripts externos) ── -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getDatabase, ref, set, onValue, get } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+
 (function(){
-  const FB_VERSION = '2026-07-v1';
+  const FB_VERSION = '2026-07-v3';
   const fbConfig = {
     apiKey: "AIzaSyCPvz65aVIn9lxIALc4BcOY20PevqXStVA",
     authDomain: "app-financeiro-6fad9.firebaseapp.com",
@@ -1622,8 +1621,9 @@ rDash(); // Firebase carregado no bloco abaixo
     appId: "1:198432639758:web:af27033bb21f7ffd51e55f"
   };
 
-  try { firebase.initializeApp(fbConfig); } catch(e) {}
-  const dbRef = firebase.database().ref('granafam');
+  const app = initializeApp(fbConfig);
+  const database = getDatabase(app);
+  const dbRef = ref(database, 'granafam');
 
   const KEYS = ['renda','gastos','fixosCart','fixosConta','emprestimos','parcs','cks','tercParcs','tercGastos','rendaExtra'];
 
@@ -1631,13 +1631,13 @@ rDash(); // Firebase carregado no bloco abaixo
   window.pushToFirebase = function(){
     const payload = {_version: FB_VERSION, _updated: Date.now()};
     KEYS.forEach(k=>{ payload[k] = S[k]; });
-    dbRef.set(payload)
+    set(dbRef, payload)
       .then(()=>showSyncStatus(true))
       .catch(e=>{ console.warn('Firebase sync error:',e); showSyncStatus(false); });
   };
 
   // Carrega dados do Firebase e inicia listener em tempo real
-  dbRef.once('value').then(snapshot=>{
+  get(dbRef).then(snapshot=>{
     const data = snapshot.val();
     if(data && data._version === FB_VERSION){
       let changed = false;
@@ -1660,7 +1660,7 @@ rDash(); // Firebase carregado no bloco abaixo
     }
 
     // Listener tempo real — atualiza quando outro dispositivo mudar
-    dbRef.on('value', snapshot=>{
+    onValue(dbRef, snapshot=>{
       const data = snapshot.val();
       if(!data || data._version !== FB_VERSION) return;
       let changed = false;
