@@ -377,7 +377,16 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
 
     <!-- PARCELAS -->
     <div id="v-parc" class="view">
-      <div style="display:flex;justify-content:flex-end;margin-bottom:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+        <div class="filters" style="margin-bottom:0" id="parc-filters">
+          <div class="ftag on" onclick="setParcF(this,'all')">Todos</div>
+          <div class="ftag" onclick="setParcF(this,'BRB Black')">BRB Black</div>
+          <div class="ftag" onclick="setParcF(this,'Itaú Azul')">Itaú Azul</div>
+          <div class="ftag" onclick="setParcF(this,'Nubank')">Nubank</div>
+          <div class="ftag" onclick="setParcF(this,'Mercado Pago')">Mercado Pago</div>
+          <div class="ftag" onclick="setParcF(this,'Inter')">Inter</div>
+          <div class="ftag" onclick="setParcF(this,'Renner')">Renner</div>
+        </div>
         <button class="fab" style="width:auto;padding:8px 16px" onclick="openM('parc-add')">＋ Nova Parcela</button>
       </div>
       <div class="card" style="margin-bottom:16px">
@@ -768,7 +777,8 @@ let S = {
     {id:21,desc:'Coparticipação',val:600.0,cat:'saude',variavel:true,meio:'Débito em conta'},
     {id:22,desc:'Diarista',val:720.0,cat:'moradia',variavel:false,meio:'Débito em conta'},
     {id:23,desc:'Seguro residencial',val:37.9,cat:'moradia',variavel:false,meio:'Débito em conta'},
-    {id:24,desc:'IPTV',val:30.0,cat:'assinatura',variavel:false,meio:'Débito em conta'}
+    {id:24,desc:'IPTV',val:30.0,cat:'assinatura',variavel:false,meio:'Débito em conta'},
+    {id:25,desc:'Plano de Saúde',val:523.0,cat:'saude',variavel:false,meio:'Desconto em folha',descontadoFolha:true}
   ]),
   emprestimos: ld('emprestimos', [
     {id:1,nome:'Financiamento Imobiliário',parcela:3729.1,finalidade:'Fixo',tipo:'Casa',parcAtual:23,parcTotal:420,consignado:false},
@@ -899,8 +909,8 @@ function getRendaExtra(m1){
 }
 
 function calcTotais(m1){
-  const tFixCart=S.fixosCart.reduce((a,f)=>a+(f.val||0),0);
-  const tFixConta=S.fixosConta.reduce((a,f)=>a+(f.val||0),0);
+  const tFixCart=S.fixosCart.filter(f=>!f.descontadoFolha).reduce((a,f)=>a+(f.val||0),0);
+  const tFixConta=S.fixosConta.filter(f=>!f.descontadoFolha).reduce((a,f)=>a+(f.val||0),0);
   const tFixos=tFixCart+tFixConta;
   const tEmp=S.emprestimos.filter(e=>!e.consignado).reduce((a,e)=>a+(e.parcela||0),0);
   const tParcs=S.parcs.reduce((a,p)=>{
@@ -1018,7 +1028,7 @@ function rCk(){
     else if(ehHoje&&c.venc<hoje)badge='<span class="badge b-venc">vencida</span>';
     else if(ehHoje&&c.venc-hoje<=5)badge='<span class="badge b-soon">em breve</span>';
     else badge='<span class="badge b-ok">ok</span>';
-    return `<div class="row"><div class="row-l"><div class="ckb" onclick="tglCk(${c.id})" style="width:18px;height:18px;border-radius:4px;border:1.5px solid var(--border2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;${c.ok?'background:var(--green);border-color:var(--green);color:#fff':''}">${c.ok?'✓':''}</div><div><div class="r-name" style="${c.ok?'text-decoration:line-through;opacity:.4':''}">${c.desc}</div><div class="r-meta">Dia ${c.venc} · ${c.comp==='anterior'?'Mês anterior':'Mês corrente'}</div></div></div><div class="row-r">${badge}<span class="r-val">${fmt(c.val)}</span><button class="del-btn" onclick="delCk(${c.id})">✕</button></div></div>`;
+    return `<div class="row"><div class="row-l"><div class="ckb" onclick="tglCk(${c.id})" style="width:18px;height:18px;border-radius:4px;border:1.5px solid var(--border2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;${c.ok?'background:var(--green);border-color:var(--green);color:#fff':''}">${c.ok?'✓':''}</div><div><div class="r-name" style="${c.ok?'text-decoration:line-through;opacity:.4':''}">${c.desc}</div><div class="r-meta" style="display:flex;align-items:center;gap:4px">Dia <input type="number" min="1" max="31" value="${c.venc}" onchange="updCkVenc(${c.id},this.value)" style="width:36px;background:none;border:none;border-bottom:1px solid var(--border2);font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);outline:none;padding:0;text-align:center"> · ${c.comp==='anterior'?'Mês anterior':'Mês corrente'}</div></div></div><div class="row-r">${badge}<span class="r-val">${fmt(c.val)}</span><button class="del-btn" onclick="delCk(${c.id})">✕</button></div></div>`;
   }).join('');
   const tot=S.cks.reduce((a,c)=>a+(c.val||0),0);
   const pg=S.cks.filter(c=>c.ok).reduce((a,c)=>a+(c.val||0),0);
@@ -1034,6 +1044,7 @@ function rCk(){
 }
 function tglCk(id){const c=S.cks.find(c=>c.id===id);if(c){c.ok=!c.ok;persist();rCk();}}
 function delCk(id){S.cks=S.cks.filter(c=>c.id!==id);persist();rCk();}
+function updCkVenc(id,v){const c=S.cks.find(c=>c.id===id);if(c){c.venc=parseInt(v)||c.venc;persist();rCk();}}
 
 // ── SEMANAL ──────────────────────────────────────────────────────────────────
 let CW2=1;
@@ -1060,10 +1071,16 @@ function rSem(){
 // ── GASTOS FIXOS ─────────────────────────────────────────────────────────────
 function rFixos(){
   function buildTbl(items, store, elId){
-    const tot=items.reduce((a,f)=>a+(f.val||0),0);
+    const tot=items.filter(f=>!f.descontadoFolha).reduce((a,f)=>a+(f.val||0),0);
     let h=`<thead><tr><th>Descrição</th><th>Categoria</th><th>Tipo</th><th style="text-align:right">Valor</th><th></th></tr></thead><tbody>`;
-    h+=items.map(f=>`<tr><td><input class="fi-edit" value="${f.desc}" onchange="updFixo('${store}',${f.id},'desc',this.value)"></td><td style="font-size:11px;color:var(--muted)">${f.cat}</td><td>${f.variavel?'<span class="var-badge">variável</span>':'<span style=\"font-size:11px;color:var(--muted)\">fixo</span>'}</td><td style="text-align:right"><input class="fi-edit" type="number" value="${f.val}" step="0.01" onchange="updFixo('${store}',${f.id},'val',this.value)"></td><td><button class="del-btn" onclick="delFixo('${store}',${f.id})">✕</button></td></tr>`).join('');
-    h+=`<tr style="border-top:2px solid var(--border)"><td colspan="3" style="font-weight:700;font-size:13px">Total</td><td style="text-align:right;font-family:'DM Mono',monospace;font-weight:700;color:var(--red)">${fmt(tot)}</td><td></td></tr></tbody>`;
+    h+=items.map(f=>{
+      const tipoBadge=f.descontadoFolha
+        ?'<span style="font-size:9px;padding:1px 6px;border-radius:10px;background:#e6f4ee;color:var(--green);border:1px solid #b6dfcc;font-family:DM Mono,monospace">desconto em folha</span>'
+        :f.variavel?'<span class="var-badge">variável</span>':'<span style="font-size:11px;color:var(--muted)">fixo</span>';
+      const rowStyle=f.descontadoFolha?'opacity:.6':'';
+      return `<tr style="${rowStyle}"><td><input class="fi-edit" value="${f.desc}" onchange="updFixo('${store}',${f.id},'desc',this.value)"></td><td style="font-size:11px;color:var(--muted)">${f.cat}</td><td>${tipoBadge}</td><td style="text-align:right"><input class="fi-edit" type="number" value="${f.val}" step="0.01" onchange="updFixo('${store}',${f.id},'val',this.value)"></td><td><button class="del-btn" onclick="delFixo('${store}',${f.id})">✕</button></td></tr>`;
+    }).join('');
+    h+=`<tr style="border-top:2px solid var(--border)"><td colspan="3" style="font-weight:700;font-size:13px">Total (excl. desconto em folha)</td><td style="text-align:right;font-family:'DM Mono',monospace;font-weight:700;color:var(--red)">${fmt(tot)}</td><td></td></tr></tbody>`;
     document.getElementById(elId).innerHTML=h;
   }
   buildTbl(S.fixosCart,'fixosCart','fixos-cart-tbl');
@@ -1111,8 +1128,9 @@ function rParc(){
   document.getElementById('parc-mes-lbl').textContent=MNS[CM]+' '+CY;
   const meses=[7,8,9,10,11,12];
   const mlbls=['Jul/26','Ago/26','Set/26','Out/26','Nov/26','Dez/26'];
+  const parcsBase=parcF==='all'?S.parcs:S.parcs.filter(p=>p.cart===parcF);
   document.getElementById('parc-meses').innerHTML=meses.map((m,i)=>{
-    const tot=S.parcs.reduce((a,p)=>{
+    const tot=parcsBase.reduce((a,p)=>{
       if(!p.mesInicio)return a;
       const mEnd=p.mesInicio+p.qtdTotal-1;
       return m>=p.mesInicio&&m<=mEnd?a+(p.valParc||0):a;
@@ -1120,7 +1138,8 @@ function rParc(){
     return `<div class="parc-mes-chip ${m===m1?'atual':''}"><div class="pmc-lbl">${mlbls[i]}</div><div class="pmc-val">${fmtK(tot)}</div></div>`;
   }).join('');
   const tbody=document.getElementById('parc-tbody');
-  tbody.innerHTML=S.parcs.map(p=>{
+  const parcsFiltradas=parcF==='all'?S.parcs:S.parcs.filter(p=>p.cart===parcF);
+  tbody.innerHTML=parcsFiltradas.map(p=>{
     if(!p.mesInicio)return '';
     const mEnd=p.mesInicio+p.qtdTotal-1;
     const ativa=m1>=p.mesInicio&&m1<=mEnd;
@@ -1140,6 +1159,21 @@ function rParc(){
   }).join('');
 }
 function delParc(id){S.parcs=S.parcs.filter(p=>p.id!==id);persist();rParc();}
+
+function setParcF(el,f){
+  document.querySelectorAll('#parc-filters .ftag').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');
+  parcF=f;
+  rParc();
+}
+
+let parcF='all';
+function setParcF(el,f){
+  document.querySelectorAll('#parc-filters .ftag').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');
+  parcF=f;
+  rParc();
+}
 
 // ── TERCEIROS ────────────────────────────────────────────────────────────────
 function rTerc(){
@@ -1225,8 +1259,8 @@ function rAg(){
   const meses=[7,8,9,10,11,12];
   const mlbls=['Jul/26','Ago/26','Set/26','Out/26','Nov/26','Dez/26'];
   const renda=S.renda.t+S.renda.n+(S.renda.e||0);
-  const tFixCart=S.fixosCart.reduce((a,f)=>a+(f.val||0),0);
-  const tFixConta=S.fixosConta.reduce((a,f)=>a+(f.val||0),0);
+  const tFixCart=S.fixosCart.filter(f=>!f.descontadoFolha).reduce((a,f)=>a+(f.val||0),0);
+  const tFixConta=S.fixosConta.filter(f=>!f.descontadoFolha).reduce((a,f)=>a+(f.val||0),0);
   const tEmp=S.emprestimos.filter(e=>!e.consignado).reduce((a,e)=>a+(e.parcela||0),0);
   function parcMes(m){return S.parcs.reduce((a,p)=>{if(!p.mesInicio)return a;const mEnd=p.mesInicio+p.qtdTotal-1;return m>=p.mesInicio&&m<=mEnd?a+(p.valParc||0):a;},0);}
   function tercMes(m){return S.tercParcs.reduce((a,p)=>{if(!p.mesInicio)return a;const mEnd=p.mesInicio+p.qtdRestante-1;return m>=p.mesInicio&&m<=mEnd?a+(p.valParc||0):a;},0);}
@@ -1241,7 +1275,7 @@ function rAg(){
   S.fixosConta.forEach(f=>{rows+=rN(f.desc,meses.map(()=>f.val));});
   rows+=rN('<strong>Total Fixos Conta</strong>',meses.map(()=>tFixConta));
   rows+=rNH('Empréstimos e Financiamentos');
-  S.emprestimos.filter(e=>!e.consignado).forEach(e=>{rows+=rN(e.nome+' ('+e.parcAtual+'/'+e.parcTotal+')',meses.map(()=>e.parcela));});
+  S.emprestimos.filter(e=>!e.consignado).forEach(e=>{rows+=rN(e.nome,meses.map(()=>e.parcela));});
   rows+=rN('<strong>Total Empréstimos</strong>',meses.map(()=>tEmp));
   rows+=rNH('Parcelas');
   rows+=rN('Total Parcelas',meses.map(m=>parcMes(m)));
