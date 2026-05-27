@@ -10,10 +10,6 @@
 <meta name="apple-mobile-web-app-title" content="GranaFam">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="theme-color" content="#0f0e0c">
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
-
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -296,16 +292,28 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
         <button class="fab" style="width:auto;padding:8px 16px" onclick="openM('gasto')">＋ Novo Gasto</button>
       </div>
       <input class="search" placeholder="Buscar gasto..." oninput="filtGastos(this.value)" id="g-search">
-      <div class="filters" id="g-filters">
-        <div class="ftag on" onclick="setGF(this,'all')">Todos</div>
-        <div class="ftag" onclick="setGF(this,'alimentacao')">Alimentação</div>
-        <div class="ftag" onclick="setGF(this,'mercado')">Mercado</div>
-        <div class="ftag" onclick="setGF(this,'transporte')">Transporte</div>
-        <div class="ftag" onclick="setGF(this,'saude')">Saúde</div>
-        <div class="ftag" onclick="setGF(this,'julia')">Júlia</div>
-        <div class="ftag" onclick="setGF(this,'moradia')">Casa</div>
-        <div class="ftag" onclick="setGF(this,'assinatura')">Assinatura</div>
-        <div class="ftag" onclick="setGF(this,'outro')">Outros</div>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
+        <div class="filters" id="g-filters" style="margin-bottom:0">
+          <div class="ftag on" onclick="setGF(this,'all')">Todas categorias</div>
+          <div class="ftag" onclick="setGF(this,'alimentacao')">Alimentação</div>
+          <div class="ftag" onclick="setGF(this,'mercado')">Mercado</div>
+          <div class="ftag" onclick="setGF(this,'transporte')">Transporte</div>
+          <div class="ftag" onclick="setGF(this,'saude')">Saúde</div>
+          <div class="ftag" onclick="setGF(this,'julia')">Júlia</div>
+          <div class="ftag" onclick="setGF(this,'moradia')">Casa</div>
+          <div class="ftag" onclick="setGF(this,'assinatura')">Assinatura</div>
+          <div class="ftag" onclick="setGF(this,'outro')">Outros</div>
+        </div>
+        <div class="filters" id="g-cart-filters" style="margin-bottom:0">
+          <div class="ftag on" onclick="setGFC(this,'all')">Todos os cartões</div>
+          <div class="ftag" onclick="setGFC(this,'BRB Black')">BRB Black</div>
+          <div class="ftag" onclick="setGFC(this,'Itaú Azul')">Itaú Azul</div>
+          <div class="ftag" onclick="setGFC(this,'Nubank')">Nubank</div>
+          <div class="ftag" onclick="setGFC(this,'Inter')">Inter</div>
+          <div class="ftag" onclick="setGFC(this,'Mercado Pago')">Mercado Pago</div>
+          <div class="ftag" onclick="setGFC(this,'Débito direto')">Débito</div>
+          <div class="ftag" onclick="setGFC(this,'Dinheiro')">Dinheiro</div>
+        </div>
       </div>
       <div class="card" id="gastos-list"></div>
     </div>
@@ -339,9 +347,19 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
 
     <!-- GASTOS SEMANAIS -->
     <div id="v-sem" class="view">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
         <div class="filters" style="margin-bottom:0" id="sem-tabs"></div>
         <button class="fab" style="width:auto;padding:8px 16px" onclick="openM('gasto')">＋ Gasto</button>
+      </div>
+      <div class="filters" id="sem-cart-filters" style="margin-bottom:14px">
+        <div class="ftag on" onclick="setSemCart(this,'all')">Todos os cartões</div>
+        <div class="ftag" onclick="setSemCart(this,'BRB Black')">BRB Black</div>
+        <div class="ftag" onclick="setSemCart(this,'Itaú Azul')">Itaú Azul</div>
+        <div class="ftag" onclick="setSemCart(this,'Nubank')">Nubank</div>
+        <div class="ftag" onclick="setSemCart(this,'Inter')">Inter</div>
+        <div class="ftag" onclick="setSemCart(this,'Mercado Pago')">Mercado Pago</div>
+        <div class="ftag" onclick="setSemCart(this,'Débito direto')">Débito</div>
+        <div class="ftag" onclick="setSemCart(this,'Dinheiro')">Dinheiro</div>
       </div>
       <div class="g21">
         <div class="card"><div class="sh"><span class="sh-t" id="sem-title">Semana 1</span><span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted)" id="sem-periodo"></span></div><div id="sem-list"></div></div>
@@ -482,6 +500,20 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
         <option value="outro">📦 Outros</option>
       </select>
     </div>
+    <div class="fg"><label class="flbl">Cartão / Conta</label>
+      <select class="fsel" id="g-cart">
+        <option value="">— Não informado —</option>
+        <option>BRB Black</option>
+        <option>BRB Visa</option>
+        <option>Itaú Azul</option>
+        <option>Nubank</option>
+        <option>Inter</option>
+        <option>Mercado Pago</option>
+        <option>Renner</option>
+        <option>Débito direto</option>
+        <option>Dinheiro</option>
+      </select>
+    </div>
     <div style="border-top:1px solid var(--border);padding-top:12px;margin-top:4px">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
         <input type="checkbox" id="g-is-parc" onchange="toggleParcCampos()" style="width:16px;height:16px;cursor:pointer;accent-color:var(--ink)">
@@ -616,13 +648,13 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
       </div>
       <div class="fg">
         <label class="flbl">Tipo</label>
-        <select class="fsel" id="re-tipo">
+        <select class="fsel" id="re-tipo" onchange="document.getElementById('re-mes-wrap').style.display=this.value==='unico'?'block':'none'">
           <option value="mensal">Mensal (todos os meses)</option>
           <option value="unico">Somente um mês</option>
         </select>
       </div>
     </div>
-    <div class="fg" id="re-mes-wrap">
+    <div class="fg" id="re-mes-wrap" style="display:none">
       <label class="flbl">Mês</label>
       <select class="fsel" id="re-mes">
         <option value="7">Julho 2026</option>
@@ -641,29 +673,9 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
 </div>
 
 <script>
-const DATA_VERSION = '2026-07-v1';
+const DATA_VERSION = '2026-07-v2';
 
-// ── FIREBASE CONFIG ───────────────────────────────────────────────────────────
-const firebaseConfig = {
-  apiKey: "AIzaSyCPvz65aVIn9lxIALc4BcOY20PevqXStVA",
-  authDomain: "app-financeiro-6fad9.firebaseapp.com",
-  databaseURL: "https://app-financeiro-6fad9-default-rtdb.firebaseio.com",
-  projectId: "app-financeiro-6fad9",
-  storageBucket: "app-financeiro-6fad9.firebasestorage.app",
-  messagingSenderId: "198432639758",
-  appId: "1:198432639758:web:af27033bb21f7ffd51e55f"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-const dbRef = db.ref('granafam');
 
-// Indicador de sync
-let syncPending = false;
-function showSyncStatus(ok) {
-  const dot = document.querySelector('.pulse');
-  if (!dot) return;
-  dot.style.background = ok ? 'var(--green)' : '#f59e0b';
-}
 const MNS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const MSH = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 const MSHH = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
@@ -671,6 +683,12 @@ const CCAT = {alimentacao:'#2d7a4f',mercado:'#2d7a4f',transporte:'#a07c20',morad
 const ICOS = {alimentacao:'🍽️',mercado:'🛒',transporte:'🚗',moradia:'🏠',saude:'🏥',assinatura:'📱',lazer:'🎭',educacao:'📚',julia:'🎀',outro:'📦',receita:'💰'};
 const TITLES = {dash:'Visão Geral',gastos:'Gastos do Mês',ck:'Checklist de Pagamentos',sem:'Gastos Semanais',fixos:'Gastos Fixos',emp:'Empréstimos e Financiamentos',parc:'Parcelas',terc:'Gastos de Terceiros',cat:'Categorias',ag:'Acompanhamento Geral'};
 let CM=6, CY=2026, CW=1;
+
+function showSyncStatus(ok) {
+  const dot = document.querySelector('.pulse');
+  if (!dot) return;
+  dot.style.background = ok ? 'var(--green)' : '#f59e0b';
+}
 
 // ── CICLOS BRB BLACK ──────────────────────────────────────────────────────────
 // CICLOS: chave = competência (mês de controle)
@@ -713,14 +731,18 @@ function ld(k,d){
 function sv(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch{}}
 const fmt=v=>'R$ '+Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
 const fmtK=v=>{v=Number(v||0);return v>=1000?'R$ '+(v/1000).toFixed(1)+'k':fmt(v);};
+const fmtDate=s=>{if(!s)return'';const[y,m,d]=s.split('-');return `${d}/${m}/${y}`;};
 let uid=Date.now();const nid=()=>++uid;
 function toast(m='✓ Salvo'){const t=document.getElementById('toast');t.textContent=m;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2500);}
 function resetDados(){
   if(!confirm('Resetar todos os dados para o padrão? Isso afeta os dois dispositivos.'))return;
-  dbRef.remove().then(()=>{
-    ['renda','gastos','fixosCart','fixosConta','emprestimos','parcs','cks','tercParcs','tercGastos','rendaExtra','data_version'].forEach(k=>localStorage.removeItem(k));
-    location.reload();
-  });
+  if(typeof dbRef !== 'undefined'){
+    dbRef.remove().then(()=>{ resetLocal(); });
+  } else { resetLocal(); }
+}
+function resetLocal(){
+  ['renda','gastos','fixosCart','fixosConta','emprestimos','parcs','cks','tercParcs','tercGastos','rendaExtra','data_version'].forEach(k=>localStorage.removeItem(k));
+  location.reload();
 }
 
 // ── ESTADO ────────────────────────────────────────────────────────────────────
@@ -899,7 +921,7 @@ let S = {
 };
 function persist(){
   ['renda','gastos','fixosCart','fixosConta','emprestimos','parcs','cks','tercParcs','tercGastos','rendaExtra'].forEach(k=>sv(k,S[k]));
-  pushToFirebase();
+  if(typeof pushToFirebase === 'function') pushToFirebase();
 }
 
 // ── NAVEGAÇÃO ─────────────────────────────────────────────────────────────────
@@ -969,12 +991,14 @@ function calcTotais(m1){
 function rDash(){
   const m1=CM+1;
   const t=calcTotais(m1);
-  const renda=S.renda.t+S.renda.n+(S.renda.e||0);
-  document.getElementById('d-renda').textContent=fmt(renda);
-  // Mostra datas dos salários da competência
+  // t.renda já inclui renda extra do mês
+  document.getElementById('d-renda').textContent=fmt(t.renda);
+  // Mostra datas dos salários + renda extra se houver
   const cicloInfo=getCiclo(m1);
   function fmtDt(s){if(!s)return'';const p=s.split('-');return p[2]+'/'+p[1];}
-  const subRenda=`Thiago ${fmtDt(cicloInfo.salThiago)} · Nataly ${fmtDt(cicloInfo.salNataly)}`;
+  const extra=getRendaExtra(m1);
+  const extraTxt=extra>0?` + extra ${fmt(extra)}`:'';
+  const subRenda=`Thiago ${fmtDt(cicloInfo.salThiago)} · Nataly ${fmtDt(cicloInfo.salNataly)}${extraTxt}`;
   document.getElementById('d-renda-sub').textContent=subRenda;
   document.getElementById('d-comp').textContent=fmt(t.total);
   const eD=document.getElementById('d-disp');eD.textContent=fmt(Math.max(t.disp,0));eD.className='c-val '+(t.disp>=0?'g':'r');
@@ -1021,7 +1045,7 @@ function rDash(){
 // ── GASTOS DO MÊS ─────────────────────────────────────────────────────────────
 let gF='all', gSQ='';
 function gastoRow(g){
-  return `<div class="row"><div class="row-l"><div class="ibox">${ICOS[g.cat]||'📦'}</div><div><div class="r-name">${g.desc}</div><div class="r-meta">${g.data} · ${g.cat}</div></div></div><div class="row-r"><span class="r-val neg">${fmt(g.val)}</span><button class="del-btn" onclick="delGasto(${g.id})">✕</button></div></div>`;
+  return `<div class="row"><div class="row-l"><div class="ibox">${ICOS[g.cat]||'📦'}</div><div><div class="r-name">${g.desc}</div><div class="r-meta">${fmtDate(g.data)}${g.cart?' · '+g.cart:''} · ${g.cat}</div></div></div><div class="row-r"><span class="r-val neg">${fmt(g.val)}</span><button class="del-btn" onclick="delGasto(${g.id})">✕</button></div></div>`;
 }
 function rGastos(){
   let items=[...S.gastos].sort((a,b)=>b.data.localeCompare(a.data));
@@ -1030,6 +1054,8 @@ function rGastos(){
   document.getElementById('gastos-list').innerHTML=items.length?items.map(g=>gastoRow(g)).join(''):'<div class="empty"><div class="eico">🔍</div>Nenhum gasto encontrado</div>';
 }
 function setGF(el,f){document.querySelectorAll('#g-filters .ftag').forEach(t=>t.classList.remove('on'));el.classList.add('on');gF=f;rGastos();}
+function setGFC(el,f){document.querySelectorAll('#g-cart-filters .ftag').forEach(t=>t.classList.remove('on'));el.classList.add('on');gCartF=f;rGastos();}
+function setSemCart(el,f){document.querySelectorAll('#sem-cart-filters .ftag').forEach(t=>t.classList.remove('on'));el.classList.add('on');semCartF=f;rSem();}
 function filtGastos(v){gSQ=v;rGastos();}
 function delGasto(id){S.gastos=S.gastos.filter(g=>g.id!==id);persist();rGastos();rDash();}
 
@@ -1090,7 +1116,8 @@ function rSem(){
   const s=sems.find(x=>x.n===CW2)||sems[0];
   document.getElementById('sem-title').textContent='Semana '+s.n;
   document.getElementById('sem-periodo').textContent=fd(s.ini)+' → '+fd(s.fim);
-  const items=S.gastos.filter(g=>g.data>=s.ini&&g.data<=s.fim);
+  let items=S.gastos.filter(g=>g.data>=s.ini&&g.data<=s.fim);
+  if(semCartF!=='all') items=items.filter(g=>(g.cart||'')===semCartF);
   document.getElementById('sem-list').innerHTML=items.length?items.map(g=>gastoRow(g)).join(''):'<div class="empty"><div class="eico">📋</div>Nenhum gasto nesta semana</div>';
   const tot=items.reduce((a,g)=>a+(g.val||0),0);
   const t=calcTotais(m1);const budget=Math.max(t.disp/4,0);
@@ -1203,6 +1230,8 @@ function setParcF(el,f){
 }
 
 let parcF='all';
+let gCartF='all';
+let semCartF='all';
 function setParcF(el,f){
   document.querySelectorAll('#parc-filters .ftag').forEach(t=>t.classList.remove('on'));
   el.classList.add('on');
@@ -1293,12 +1322,18 @@ function abrirCat(cat,pref){
 function rAg(){
   const meses=[7,8,9,10,11,12];
   const mlbls=['Jul/26','Ago/26','Set/26','Out/26','Nov/26','Dez/26'];
-  const renda=S.renda.t+S.renda.n+(S.renda.e||0);
+  const rendaBase=S.renda.t+S.renda.n+(S.renda.e||0);
   const tFixCart=S.fixosCart.filter(f=>!f.descontadoFolha).reduce((a,f)=>a+(f.val||0),0);
   const tFixConta=S.fixosConta.filter(f=>!f.descontadoFolha).reduce((a,f)=>a+(f.val||0),0);
   const tEmp=S.emprestimos.filter(e=>!e.consignado).reduce((a,e)=>a+(e.parcela||0),0);
   function parcMes(m){return S.parcs.reduce((a,p)=>{if(!p.mesInicio)return a;const mEnd=p.mesInicio+p.qtdTotal-1;return m>=p.mesInicio&&m<=mEnd?a+(p.valParc||0):a;},0);}
   function tercMes(m){return S.tercParcs.reduce((a,p)=>{if(!p.mesInicio)return a;const mEnd=p.mesInicio+p.qtdRestante-1;return m>=p.mesInicio&&m<=mEnd?a+(p.valParc||0):a;},0);}
+  // Gastos variáveis: soma dos gastos dentro do ciclo de cada competência
+  function gastosMes(m){
+    const ciclo=getCiclo(m);
+    if(!ciclo)return 0;
+    return S.gastos.filter(g=>g.data>=ciclo.ini&&g.data<=ciclo.fim).reduce((a,g)=>a+(g.val||0),0);
+  }
   const hdrs=`<thead><tr><th style="min-width:180px">Descrição</th>${mlbls.map(m=>`<th style="text-align:right;min-width:90px">${m}</th>`).join('')}</tr></thead>`;
   let rows='';
   const rN=(desc,vals,cls='')=>`<tr class="${cls}"><td>${desc}</td>${vals.map(v=>`<td style="text-align:right;font-family:'DM Mono',monospace;font-size:11px">${fmt(v)}</td>`).join('')}</tr>`;
@@ -1314,10 +1349,12 @@ function rAg(){
   rows+=rN('<strong>Total Empréstimos</strong>',meses.map(()=>tEmp));
   rows+=rNH('Parcelas');
   rows+=rN('Total Parcelas',meses.map(m=>parcMes(m)));
+  rows+=rNH('Gastos Variáveis do Mês');
+  rows+=rN('Total Gastos Variáveis',meses.map(m=>gastosMes(m)));
   rows+=rNH('Gastos de Terceiros (a receber)');
   rows+=rN('Total Terceiros',meses.map(m=>tercMes(m)));
   rows+=rNH('','background:var(--ink);color:#fff');
-  rows+=`<tr style="background:var(--ink)"><td style="color:#fff;font-weight:700;padding:8px 12px">TOTAL DÉBITOS</td>${meses.map(m=>`<td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:#f87171;font-weight:700">${fmt(tFixCart+tFixConta+tEmp+parcMes(m))}</td>`).join('')}</tr>`;
+  rows+=`<tr style="background:var(--ink)"><td style="color:#fff;font-weight:700;padding:8px 12px">TOTAL DÉBITOS</td>${meses.map(m=>`<td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:#f87171;font-weight:700">${fmt(tFixCart+tFixConta+tEmp+parcMes(m)+gastosMes(m))}</td>`).join('')}</tr>`;
   rows+=rNH('Receitas');
   rows+=rN('Salário Thiago (dia 20 mês ant.)',meses.map(()=>S.renda.t));
   rows+=rN('Salário Nataly (dia 01)',meses.map(()=>S.renda.n));
@@ -1330,7 +1367,7 @@ function rAg(){
   if(S.rendaExtra.length){
     rows+=rN('Total Renda Extra',meses.map(m=>getRendaExtra(m)));
   }
-  rows+=`<tr style="border-top:2px solid var(--border)"><td style="font-family:'DM Serif Display',serif;font-size:15px;font-weight:700;padding:10px 12px">SALDO DO MÊS</td>${meses.map(m=>{const s=(renda+getRendaExtra(m))-(tFixCart+tFixConta+tEmp+parcMes(m));return `<td style="text-align:right;font-family:'DM Serif Display',serif;font-size:14px;font-weight:700;color:${s>=0?'var(--green)':'var(--red)'}">${fmt(s)}</td>`;}).join('')}</tr>`;
+  rows+=`<tr style="border-top:2px solid var(--border)"><td style="font-family:'DM Serif Display',serif;font-size:15px;font-weight:700;padding:10px 12px">SALDO DO MÊS</td>${meses.map(m=>{const s=(rendaBase+getRendaExtra(m))-(tFixCart+tFixConta+tEmp+parcMes(m)+gastosMes(m));return `<td style="text-align:right;font-family:'DM Serif Display',serif;font-size:14px;font-weight:700;color:${s>=0?'var(--green)':'var(--red)'}">${fmt(s)}</td>`;}).join('')}</tr>`;
   document.getElementById('ag-tbl').innerHTML=hdrs+'<tbody>'+rows+'</tbody>';
 }
 
@@ -1354,7 +1391,8 @@ function saveGasto(){
   const desc=document.getElementById('g-desc').value.trim();const val=parseFloat(document.getElementById('g-val').value)||0;
   if(!desc||!val)return;
   const data=document.getElementById('g-data').value;
-  S.gastos.push({id:nid(),desc,val,cat:document.getElementById('g-cat').value,data});
+  const cart=document.getElementById('g-cart').value||'';
+  S.gastos.push({id:nid(),desc,val,cat:document.getElementById('g-cat').value,data,cart});
   if(document.getElementById('g-is-parc').checked){
     const n=parseInt(document.getElementById('g-parc-n').value)||1;const tot=parseFloat(document.getElementById('g-parc-tot').value)||val;
     const mesI=parseInt(data.split('-')[1]);
@@ -1362,6 +1400,7 @@ function saveGasto(){
   }
   persist();closeM('gasto');toast();rDash();rGastos();
   ['g-desc','g-val','g-parc-n','g-parc-tot'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('g-cart').value='';
 }
 function saveCk(){const desc=document.getElementById('ck-desc').value.trim();if(!desc)return;S.cks.push({id:nid(),desc,venc:parseInt(document.getElementById('ck-venc').value)||1,val:parseFloat(document.getElementById('ck-val-inp').value)||0,comp:document.getElementById('ck-comp').value,ok:false});persist();closeM('ck-add');toast();rCk();['ck-desc','ck-venc','ck-val-inp'].forEach(id=>document.getElementById(id).value='');}
 function saveFixo(){const desc=document.getElementById('fixo-desc').value.trim();if(!desc)return;const item={id:nid(),desc,val:parseFloat(document.getElementById('fixo-val').value)||0,cat:document.getElementById('fixo-cat').value,variavel:document.getElementById('fixo-tipo').value==='true',meio:fixoMeio==='cartao'?'Cartão de crédito':'Débito em conta'};if(fixoMeio==='cartao')S.fixosCart.push(item);else S.fixosConta.push(item);persist();closeM('fixo-add');toast();rFixos();['fixo-desc','fixo-val'].forEach(id=>document.getElementById(id).value='');}
@@ -1389,15 +1428,7 @@ document.querySelectorAll('.ni').forEach(n=>n.addEventListener('click',()=>{if(w
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 
 // ── RENDA EXTRA ──────────────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded',function(){
-  var sel=document.getElementById('re-tipo');
-  if(sel) sel.addEventListener('change',function(){
-    document.getElementById('re-mes-wrap').style.display=this.value==='unico'?'block':'none';
-  });
-  // Inicia escondido se mensal for o default
-  var wrap=document.getElementById('re-mes-wrap');
-  if(wrap) wrap.style.display='none';
-});
+// toggle mês da renda extra — chamado pelo onchange do select no HTML
 
 function saveRendaExtra(){
   var desc=document.getElementById('re-desc').value.trim();
@@ -1428,28 +1459,88 @@ function fecharCatDet(){document.getElementById('cat-detalhe').style.display='no
 CM=6; CY=2026;
 document.getElementById('mlabel').textContent='JUL 2026';
 
-// Carrega dados do Firebase na inicialização
-showSyncStatus(false);
-dbRef.once('value').then(snapshot=>{
-  const data = snapshot.val();
-  if(data && data._version === DATA_VERSION){
-    // Dados remotos existem e são compatíveis — usa Firebase
-    const keys=['renda','gastos','fixosCart','fixosConta','emprestimos','parcs','cks','tercParcs','tercGastos','rendaExtra'];
-    keys.forEach(k=>{ if(data[k]!==undefined){ S[k]=data[k]; sv(k,data[k]); } });
-    console.log('✓ Dados carregados do Firebase');
-  } else if(!data){
-    // Firebase vazio — envia dados locais para o Firebase (primeiro uso)
-    console.log('Firebase vazio — enviando dados locais...');
-    pushToFirebase();
-  }
-  showSyncStatus(true);
-  rDash();
-  startFirebaseListener(); // Escuta mudanças em tempo real
-}).catch(e=>{
-  console.warn('Firebase indisponível, usando dados locais:', e);
-  showSyncStatus(false);
-  rDash();
-});
+rDash(); // Firebase carregado no bloco abaixo
 </script>
+
+<!-- ── FIREBASE (bloco separado, carrega após o app principal) ── -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script>
+(function(){
+  const FB_VERSION = '2026-07-v1';
+  const fbConfig = {
+    apiKey: "AIzaSyCPvz65aVIn9lxIALc4BcOY20PevqXStVA",
+    authDomain: "app-financeiro-6fad9.firebaseapp.com",
+    databaseURL: "https://app-financeiro-6fad9-default-rtdb.firebaseio.com",
+    projectId: "app-financeiro-6fad9",
+    storageBucket: "app-financeiro-6fad9.firebasestorage.app",
+    messagingSenderId: "198432639758",
+    appId: "1:198432639758:web:af27033bb21f7ffd51e55f"
+  };
+
+  try { firebase.initializeApp(fbConfig); } catch(e) {}
+  const dbRef = firebase.database().ref('granafam');
+
+  const KEYS = ['renda','gastos','fixosCart','fixosConta','emprestimos','parcs','cks','tercParcs','tercGastos','rendaExtra'];
+
+  // Expõe pushToFirebase globalmente para o persist() do app
+  window.pushToFirebase = function(){
+    const payload = {_version: FB_VERSION, _updated: Date.now()};
+    KEYS.forEach(k=>{ payload[k] = S[k]; });
+    dbRef.set(payload)
+      .then(()=>showSyncStatus(true))
+      .catch(e=>{ console.warn('Firebase sync error:',e); showSyncStatus(false); });
+  };
+
+  // Carrega dados do Firebase e inicia listener em tempo real
+  dbRef.once('value').then(snapshot=>{
+    const data = snapshot.val();
+    if(data && data._version === FB_VERSION){
+      let changed = false;
+      KEYS.forEach(k=>{
+        if(data[k] !== undefined){
+          S[k] = data[k];
+          try{ localStorage.setItem(k, JSON.stringify(data[k])); }catch{}
+          changed = true;
+        }
+      });
+      if(changed){
+        showSyncStatus(true);
+        rDash();
+        console.log('✓ Dados carregados do Firebase');
+      }
+    } else if(!data){
+      // Firebase vazio — sobe dados locais
+      window.pushToFirebase();
+      console.log('Firebase vazio — dados locais enviados');
+    }
+
+    // Listener tempo real — atualiza quando outro dispositivo mudar
+    dbRef.on('value', snapshot=>{
+      const data = snapshot.val();
+      if(!data || data._version !== FB_VERSION) return;
+      let changed = false;
+      KEYS.forEach(k=>{
+        if(data[k] !== undefined){
+          const remote = JSON.stringify(data[k]);
+          const local  = JSON.stringify(S[k]);
+          if(remote !== local){ S[k]=data[k]; changed=true; }
+        }
+      });
+      if(changed){
+        showSyncStatus(true);
+        const a = document.querySelector('.ni.on');
+        const vn = a ? (a.getAttribute('onclick').match(/'([^']+)'/)||[])[1] : 'dash';
+        render(vn);
+      }
+    });
+
+  }).catch(e=>{
+    console.warn('Firebase indisponível — modo offline:', e);
+    showSyncStatus(false);
+  });
+})();
+</script>
+
 </body>
 </html>
