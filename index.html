@@ -429,7 +429,7 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
     <!-- ACOMP GERAL -->
     <div id="v-ag" class="view">
       <div class="card" style="overflow-x:auto">
-        <div class="sh"><span class="sh-t">Acompanhamento Geral — 2026/2027</span></div>
+        <div class="sh"><span class="sh-t">Acompanhamento Geral — 2026/2027</span><button class="sh-btn" onclick="openM('renda-extra')">+ Renda Extra</button></div>
         <table class="tbl" id="ag-tbl"></table>
       </div>
     </div>
@@ -588,6 +588,45 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
 
 <div class="toast" id="toast">✓ Salvo</div>
 
+<div class="overlay" id="m-renda-extra">
+  <div class="modal">
+    <div class="m-title">Renda Extra</div>
+    <div class="m-sub">Adicionar receita ao período</div>
+    <div class="fg">
+      <label class="flbl">Descrição</label>
+      <input class="fi-inp" type="text" id="re-desc" placeholder="Ex: Freelance, 13° salário, bônus...">
+    </div>
+    <div class="frow">
+      <div class="fg">
+        <label class="flbl">Valor (R$)</label>
+        <input class="fi-inp" type="number" id="re-val" step="0.01">
+      </div>
+      <div class="fg">
+        <label class="flbl">Tipo</label>
+        <select class="fsel" id="re-tipo">
+          <option value="mensal">Mensal (todos os meses)</option>
+          <option value="unico">Somente um mês</option>
+        </select>
+      </div>
+    </div>
+    <div class="fg" id="re-mes-wrap">
+      <label class="flbl">Mês</label>
+      <select class="fsel" id="re-mes">
+        <option value="7">Julho 2026</option>
+        <option value="8">Agosto 2026</option>
+        <option value="9">Setembro 2026</option>
+        <option value="10">Outubro 2026</option>
+        <option value="11">Novembro 2026</option>
+        <option value="12">Dezembro 2026</option>
+      </select>
+    </div>
+    <div class="mfoot">
+      <button class="btn btn-s" onclick="closeM('renda-extra')">Cancelar</button>
+      <button class="btn btn-p" onclick="saveRendaExtra()">Salvar</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const DATA_VERSION = '2026-07-v1';
 const MNS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
@@ -641,7 +680,7 @@ const fmt=v=>'R$ '+Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,
 const fmtK=v=>{v=Number(v||0);return v>=1000?'R$ '+(v/1000).toFixed(1)+'k':fmt(v);};
 let uid=Date.now();const nid=()=>++uid;
 function toast(m='✓ Salvo'){const t=document.getElementById('toast');t.textContent=m;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2500);}
-function resetDados(){if(!confirm('Resetar todos os dados para o padrão?'))return;['renda','gastos','fixosCart','fixosConta','emprestimos','parcs','cks','tercParcs','tercGastos','data_version'].forEach(k=>localStorage.removeItem(k));location.reload();}
+function resetDados(){if(!confirm('Resetar todos os dados para o padrão?'))return;['renda','gastos','fixosCart','fixosConta','emprestimos','parcs','cks','tercParcs','tercGastos','rendaExtra','data_version'].forEach(k=>localStorage.removeItem(k));location.reload();}
 
 // ── ESTADO ────────────────────────────────────────────────────────────────────
 let S = {
@@ -813,8 +852,10 @@ let S = {
     {id:7,desc:'Vivo',cart:'Nubank',devedor:'Mãe',valParc:60.0,qtdRestante:5,mesInicio:7}
   ]),
   tercGastos: ld('tercGastos', []),
+  rendaExtra: ld('rendaExtra', []),
+  // [{id, desc, val, tipo:'mensal'|'unico', mes:null|7..12}]
 };
-function persist(){['renda','gastos','fixosCart','fixosConta','emprestimos','parcs','cks','tercParcs','tercGastos'].forEach(k=>sv(k,S[k]));}
+function persist(){['renda','gastos','fixosCart','fixosConta','emprestimos','parcs','cks','tercParcs','tercGastos','rendaExtra'].forEach(k=>sv(k,S[k]));}
 
 // ── NAVEGAÇÃO ─────────────────────────────────────────────────────────────────
 function goTo(el,v){
@@ -849,6 +890,14 @@ function render(v){
 function moveMes(d){CM+=d;if(CM>11){CM=0;CY++;}if(CM<0){CM=11;CY--;}document.getElementById('mlabel').textContent=MSHH[CM]+' '+CY;const a=document.querySelector('.ni.on');const vn=a?(a.getAttribute('onclick').match(/'([^']+)'/)||[])[1]:'dash';render(vn);}
 
 // ── CÁLCULOS CENTRAIS ─────────────────────────────────────────────────────────
+function getRendaExtra(m1){
+  return S.rendaExtra.reduce((a,r)=>{
+    if(r.tipo==='mensal') return a+(r.val||0);
+    if(r.tipo==='unico'&&r.mes===m1) return a+(r.val||0);
+    return a;
+  },0);
+}
+
 function calcTotais(m1){
   const tFixCart=S.fixosCart.reduce((a,f)=>a+(f.val||0),0);
   const tFixConta=S.fixosConta.reduce((a,f)=>a+(f.val||0),0);
@@ -861,7 +910,8 @@ function calcTotais(m1){
     if(mAtual>=p.mesInicio&&mAtual<=mEnd)return a+(p.valParc||0);
     return a;
   },0);
-  const renda=S.renda.t+S.renda.n+(S.renda.e||0);
+  const extra=getRendaExtra(m1);
+  const renda=S.renda.t+S.renda.n+(S.renda.e||0)+extra;
   const total=tFixos+tEmp+tParcs;
   const disp=renda-total;
   const ciclo=getCiclo(m1);
@@ -1203,7 +1253,15 @@ function rAg(){
   rows+=rN('Salário Thiago (dia 20 mês ant.)',meses.map(()=>S.renda.t));
   rows+=rN('Salário Nataly (dia 01)',meses.map(()=>S.renda.n));
   rows+=rN('Terceiros (a receber)',meses.map(m=>tercMes(m)));
-  rows+=`<tr style="border-top:2px solid var(--border)"><td style="font-family:'DM Serif Display',serif;font-size:15px;font-weight:700;padding:10px 12px">SALDO DO MÊS</td>${meses.map(m=>{const s=renda-(tFixCart+tFixConta+tEmp+parcMes(m));return `<td style="text-align:right;font-family:'DM Serif Display',serif;font-size:14px;font-weight:700;color:${s>=0?'var(--green)':'var(--red)'}">${fmt(s)}</td>`;}).join('')}</tr>`;
+  // Rendas extras
+  S.rendaExtra.forEach(r=>{
+    const lbl=`${r.desc} <span style="font-size:10px;color:var(--muted)">${r.tipo==='mensal'?'mensal':'único'}</span> <button class="del-btn" onclick="delRendaExtra(${r.id})" style="margin-left:4px">✕</button>`;
+    rows+=`<tr><td style="font-size:13px">${lbl}</td>${meses.map(m=>`<td style="text-align:right;font-family:'DM Mono',monospace;font-size:11px">${r.tipo==='mensal'?fmt(r.val):(r.mes===m?fmt(r.val):'—')}</td>`).join('')}</tr>`;
+  });
+  if(S.rendaExtra.length){
+    rows+=rN('Total Renda Extra',meses.map(m=>getRendaExtra(m)));
+  }
+  rows+=`<tr style="border-top:2px solid var(--border)"><td style="font-family:'DM Serif Display',serif;font-size:15px;font-weight:700;padding:10px 12px">SALDO DO MÊS</td>${meses.map(m=>{const s=(renda+getRendaExtra(m))-(tFixCart+tFixConta+tEmp+parcMes(m));return `<td style="text-align:right;font-family:'DM Serif Display',serif;font-size:14px;font-weight:700;color:${s>=0?'var(--green)':'var(--red)'}">${fmt(s)}</td>`;}).join('')}</tr>`;
   document.getElementById('ag-tbl').innerHTML=hdrs+'<tbody>'+rows+'</tbody>';
 }
 
@@ -1260,6 +1318,34 @@ document.querySelectorAll('.ni').forEach(n=>n.addEventListener('click',()=>{if(w
   document.body.appendChild(b);
 })();
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+
+// ── RENDA EXTRA ──────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded',function(){
+  var sel=document.getElementById('re-tipo');
+  if(sel) sel.addEventListener('change',function(){
+    document.getElementById('re-mes-wrap').style.display=this.value==='unico'?'block':'none';
+  });
+  // Inicia escondido se mensal for o default
+  var wrap=document.getElementById('re-mes-wrap');
+  if(wrap) wrap.style.display='none';
+});
+
+function saveRendaExtra(){
+  var desc=document.getElementById('re-desc').value.trim();
+  var val=parseFloat(document.getElementById('re-val').value)||0;
+  if(!desc||!val)return;
+  var tipo=document.getElementById('re-tipo').value;
+  var mes=tipo==='unico'?parseInt(document.getElementById('re-mes').value):null;
+  S.rendaExtra.push({id:nid(),desc:desc,val:val,tipo:tipo,mes:mes});
+  persist();closeM('renda-extra');toast();rAg();rDash();
+  document.getElementById('re-desc').value='';
+  document.getElementById('re-val').value='';
+}
+
+function delRendaExtra(id){
+  S.rendaExtra=S.rendaExtra.filter(r=>r.id!==id);
+  persist();rAg();rDash();
+}
 
 // ── HELPERS NAV ──────────────────────────────────────────────────────────────
 function navTo(v){
