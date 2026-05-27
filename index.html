@@ -262,7 +262,7 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
         <div id="dash-warn-list"></div>
       </div>
       <div class="g4">
-        <div class="card csm"><div class="c-lbl">Renda Familiar</div><div class="c-val b" id="d-renda">R$ 16.500</div><div class="c-sub">Thiago + Nataly</div></div>
+        <div class="card csm"><div class="c-lbl">Renda Familiar</div><div class="c-val b" id="d-renda">R$ 16.500</div><div class="c-sub" id="d-renda-sub">Thiago + Nataly</div></div>
         <div class="card csm"><div class="c-lbl">Compromissos</div><div class="c-val r" id="d-comp">—</div><div class="c-sub">Fixos + Financ. + Parcelas</div></div>
         <div class="card csm"><div class="c-lbl">Disponível</div><div class="c-val g" id="d-disp">—</div><div class="c-sub">Para gastar no ciclo</div></div>
         <div class="card csm"><div class="c-lbl">Saldo do Mês</div><div class="c-val" id="d-saldo">—</div><div class="c-sub" id="d-saldo-sub"></div></div>
@@ -599,13 +599,18 @@ const TITLES = {dash:'Visão Geral',gastos:'Gastos do Mês',ck:'Checklist de Pag
 let CM=6, CY=2026, CW=1;
 
 // ── CICLOS BRB BLACK ──────────────────────────────────────────────────────────
+// CICLOS: chave = competência (mês de controle)
+// Ciclo de gastos = fatura que VENCE no mês anterior à competência
+// Thiago recebe dia 20 do mês anterior à competência
+// Nataly recebe dia 01 da competência
 const CICLOS = {
-  7:{ini:'2026-06-09',fim:'2026-07-07'},
-  8:{ini:'2026-07-07',fim:'2026-08-07'},
-  9:{ini:'2026-08-07',fim:'2026-09-08'},
-  10:{ini:'2026-09-08',fim:'2026-10-07'},
-  11:{ini:'2026-10-07',fim:'2026-11-09'},
-  12:{ini:'2026-11-09',fim:'2026-12-08'},
+  6:{ini:'2026-04-08',fim:'2026-05-07', salThiago:'2026-05-20', salNataly:'2026-06-01'},
+  7:{ini:'2026-05-08',fim:'2026-06-09', salThiago:'2026-06-20', salNataly:'2026-07-01'},
+  8:{ini:'2026-06-09',fim:'2026-07-07', salThiago:'2026-07-20', salNataly:'2026-08-01'},
+  9:{ini:'2026-07-07',fim:'2026-08-07', salThiago:'2026-08-20', salNataly:'2026-09-01'},
+  10:{ini:'2026-08-07',fim:'2026-09-08', salThiago:'2026-09-20', salNataly:'2026-10-01'},
+  11:{ini:'2026-09-08',fim:'2026-10-07', salThiago:'2026-10-20', salNataly:'2026-11-01'},
+  12:{ini:'2026-10-07',fim:'2026-11-09', salThiago:'2026-11-20', salNataly:'2026-12-01'},
 };
 function getCiclo(m1){return CICLOS[m1]||CICLOS[7];}
 function getSemanas(m1){
@@ -871,6 +876,11 @@ function rDash(){
   const t=calcTotais(m1);
   const renda=S.renda.t+S.renda.n+(S.renda.e||0);
   document.getElementById('d-renda').textContent=fmt(renda);
+  // Mostra datas dos salários da competência
+  const cicloInfo=getCiclo(m1);
+  function fmtDt(s){if(!s)return'';const p=s.split('-');return p[2]+'/'+p[1];}
+  const subRenda=`Thiago ${fmtDt(cicloInfo.salThiago)} · Nataly ${fmtDt(cicloInfo.salNataly)}`;
+  document.getElementById('d-renda-sub').textContent=subRenda;
   document.getElementById('d-comp').textContent=fmt(t.total);
   const eD=document.getElementById('d-disp');eD.textContent=fmt(Math.max(t.disp,0));eD.className='c-val '+(t.disp>=0?'g':'r');
   const eS=document.getElementById('d-saldo');eS.textContent=fmt(Math.abs(t.saldo));eS.className='c-val '+(t.saldo>=0?'g':'r');
@@ -1190,8 +1200,8 @@ function rAg(){
   rows+=rNH('','background:var(--ink);color:#fff');
   rows+=`<tr style="background:var(--ink)"><td style="color:#fff;font-weight:700;padding:8px 12px">TOTAL DÉBITOS</td>${meses.map(m=>`<td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:#f87171;font-weight:700">${fmt(tFixCart+tFixConta+tEmp+parcMes(m))}</td>`).join('')}</tr>`;
   rows+=rNH('Receitas');
-  rows+=rN('Salário Thiago',meses.map(()=>S.renda.t));
-  rows+=rN('Salário Nataly',meses.map(()=>S.renda.n));
+  rows+=rN('Salário Thiago (dia 20 mês ant.)',meses.map(()=>S.renda.t));
+  rows+=rN('Salário Nataly (dia 01)',meses.map(()=>S.renda.n));
   rows+=rN('Terceiros (a receber)',meses.map(m=>tercMes(m)));
   rows+=`<tr style="border-top:2px solid var(--border)"><td style="font-family:'DM Serif Display',serif;font-size:15px;font-weight:700;padding:10px 12px">SALDO DO MÊS</td>${meses.map(m=>{const s=renda-(tFixCart+tFixConta+tEmp+parcMes(m));return `<td style="text-align:right;font-family:'DM Serif Display',serif;font-size:14px;font-weight:700;color:${s>=0?'var(--green)':'var(--red)'}">${fmt(s)}</td>`;}).join('')}</tr>`;
   document.getElementById('ag-tbl').innerHTML=hdrs+'<tbody>'+rows+'</tbody>';
