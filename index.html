@@ -738,7 +738,7 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
 </div>
 
 <script>
-const DATA_VERSION = '2026-07-v7';
+const DATA_VERSION = '2026-07-v8';
 
 
 const MNS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
@@ -1541,7 +1541,7 @@ function rAg(){
   rows += rSec('Gastos de Terceiros (a receber)', meses.map(m=>tercMes(m)), null);
 
   // TOTAL DÉBITOS
-  rows += rSec('TOTAL DÉBITOS', meses.map(m=>tFixCart+tFixConta+tEmp+parcMes(m)+gastosMes(m)), null, true);
+  rows += rSec('TOTAL DÉBITOS', meses.map(m=>{const ct=calcTotais(m);return ct.totalReal;}), null, true);
 
   // RECEITAS
   rows += `<tr><td colspan="${meses.length+1}" style="background:var(--cream);font-weight:600;font-size:12px;padding:8px 12px">Receitas</td></tr>`;
@@ -1555,7 +1555,8 @@ function rAg(){
   if(S.rendaExtra.length) rows+=rV('Total Renda Extra', meses.map(m=>getRendaExtra(m)));
 
   // SALDO
-  rows+=`<tr style="border-top:2px solid var(--border)"><td style="font-family:'DM Serif Display',serif;font-size:15px;font-weight:700;padding:10px 12px">SALDO DO MÊS</td>${meses.map(m=>{const s=(rendaBase+getRendaExtra(m))-(tFixCart+tFixConta+tEmp+parcMes(m)+gastosMes(m));return `<td style="text-align:right;font-family:'DM Serif Display',serif;font-size:14px;font-weight:700;color:${s>=0?'var(--green)':'var(--red)'};padding:10px 10px">${fmt(s)}</td>`;}).join('')}</tr>`;
+  // Usa calcTotais para garantir mesma lógica da Visão Geral
+  rows+=`<tr style="border-top:2px solid var(--border)"><td style="font-family:'DM Serif Display',serif;font-size:15px;font-weight:700;padding:10px 12px">SALDO DO MÊS</td>${meses.map(m=>{const ct=calcTotais(m);return `<td style="text-align:right;font-family:'DM Serif Display',serif;font-size:14px;font-weight:700;color:${ct.saldo>=0?'var(--green)':'var(--red)'};padding:10px 10px">${fmt(ct.saldo)}</td>`;}).join('')}</tr>`;
 
   document.getElementById('ag-tbl').innerHTML=hdrs+'<tbody>'+rows+'</tbody>';
 }
