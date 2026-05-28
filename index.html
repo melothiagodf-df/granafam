@@ -739,7 +739,7 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
 </div>
 
 <script>
-const DATA_VERSION = '2026-07-v11';
+const DATA_VERSION = '2026-07-v12';
 
 
 const MNS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
@@ -1977,7 +1977,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, set, onValue, get } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
 (function(){
-  const FB_VERSION = '2026-07-v4';
+  const FB_VERSION = '2026-07-v5';
   const fbConfig = {
     apiKey: "AIzaSyCPvz65aVIn9lxIALc4BcOY20PevqXStVA",
     authDomain: "app-financeiro-6fad9.firebaseapp.com",
@@ -1994,6 +1994,17 @@ import { getDatabase, ref, set, onValue, get } from 'https://www.gstatic.com/fir
 
   const KEYS = ['renda','gastos','fixosCart','fixosConta','emprestimos','parcs','cks','tercParcs','tercGastos','rendaExtra'];
 
+  // Garante flags consumivel após qualquer carregamento
+  function aplicaMigracoes(){
+    if(S.fixosCart) S.fixosCart.forEach(f=>{
+      if((f.desc==='Combustível'||f.desc==='Combustivel')&&!f.consumivel) f.consumivel='combustivel';
+      if((f.desc==='Remédio'||f.desc==='Remédios')&&!f.consumivel) f.consumivel='remedios';
+    });
+    if(S.fixosConta) S.fixosConta.forEach(f=>{
+      if(f.desc==='Diarista'&&!f.consumivel) f.consumivel='diarista';
+    });
+  }
+
   // Expõe pushToFirebase globalmente para o persist() do app
   window.pushToFirebase = function(){
     const payload = {_version: FB_VERSION, _updated: Date.now()};
@@ -2007,35 +2018,29 @@ import { getDatabase, ref, set, onValue, get } from 'https://www.gstatic.com/fir
   get(dbRef).then(snapshot=>{
     const data = snapshot.val();
     if(data && data._version === FB_VERSION){
-      let changed = false;
-      KEYS.forEach(k=>{
-        if(data[k] !== undefined){
-          S[k] = data[k];
-          try{ localStorage.setItem(k, JSON.stringify(data[k])); }catch{}
-          changed = true;
-        }
+      // Versão correta — carrega dados do Firebase
+      KEYS.forEach(k=>{ if(data[k]!==undefined){ S[k]=data[k]; try{localStorage.setItem(k,JSON.stringify(data[k]));}catch{} } });
+      aplicaMigracoes();
+      showSyncStatus(true);
+      rDash();
+      console.log('✓ Dados Firebase v'+FB_VERSION);
+    } else if(data && data._version !== FB_VERSION){
+      // Versão antiga no Firebase — mantém defaults do código e sobe versão nova
+      console.log('Firebase versão antiga ('+data._version+') — subindo versão nova...');
+      // Aproveita dados do Firebase que existam (exceto fixosCart/Conta/emprestimos/parcs que têm defaults novos)
+      ['gastos','cks','tercParcs','tercGastos','rendaExtra'].forEach(k=>{
+        if(data[k]!==undefined){ S[k]=data[k]; try{localStorage.setItem(k,JSON.stringify(data[k]));}catch{} }
       });
-      // Garante flags consumivel nos fixos (podem ter sido perdidos no Firebase)
-      if(S.fixosCart){
-        S.fixosCart.forEach(f=>{
-          if(f.desc==='Combustível' && !f.consumivel) f.consumivel='combustivel';
-          if((f.desc==='Remédio'||f.desc==='Remédios') && !f.consumivel) f.consumivel='remedios';
-        });
-      }
-      if(S.fixosConta){
-        S.fixosConta.forEach(f=>{
-          if(f.desc==='Diarista' && !f.consumivel) f.consumivel='diarista';
-        });
-      }
-      if(changed){
-        showSyncStatus(true);
-        rDash();
-        console.log('✓ Dados carregados do Firebase');
-      }
-    } else if(!data){
-      // Firebase vazio — sobe dados locais
+      aplicaMigracoes();
+      window.pushToFirebase(); // Sobe dados com nova versão
+      showSyncStatus(true);
+      rDash();
+    } else {
+      // Firebase vazio — sobe defaults
+      console.log('Firebase vazio — enviando defaults...');
       window.pushToFirebase();
-      console.log('Firebase vazio — dados locais enviados');
+      showSyncStatus(true);
+      rDash();
     }
 
     // Listener tempo real — atualiza quando outro dispositivo mudar
@@ -2051,6 +2056,7 @@ import { getDatabase, ref, set, onValue, get } from 'https://www.gstatic.com/fir
         }
       });
       if(changed){
+        aplicaMigracoes();
         showSyncStatus(true);
         const a = document.querySelector('.ni.on');
         const vn = a ? (a.getAttribute('onclick').match(/'([^']+)'/)||[])[1] : 'dash';
