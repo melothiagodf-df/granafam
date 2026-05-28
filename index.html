@@ -739,7 +739,7 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
 </div>
 
 <script>
-const DATA_VERSION = '2026-07-v12';
+const DATA_VERSION = '2026-07-v13';
 
 
 const MNS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
@@ -1977,7 +1977,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, set, onValue, get } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
 (function(){
-  const FB_VERSION = '2026-07-v5';
+  const FB_VERSION = '2026-07-v6';
   const fbConfig = {
     apiKey: "AIzaSyCPvz65aVIn9lxIALc4BcOY20PevqXStVA",
     authDomain: "app-financeiro-6fad9.firebaseapp.com",
@@ -1992,7 +1992,10 @@ import { getDatabase, ref, set, onValue, get } from 'https://www.gstatic.com/fir
   const database = getDatabase(app);
   const dbRef = ref(database, 'granafam');
 
-  const KEYS = ['renda','gastos','fixosCart','fixosConta','emprestimos','parcs','cks','tercParcs','tercGastos','rendaExtra'];
+  // Dados transacionais — sincronizam entre dispositivos
+  const KEYS = ['gastos','cks','tercParcs','tercGastos','rendaExtra'];
+  // Dados de configuração — cada dispositivo usa seus defaults (editável localmente)
+  const KEYS_CONFIG = ['renda','fixosCart','fixosConta','emprestimos','parcs'];
 
   // Garante flags consumivel após qualquer carregamento
   function aplicaMigracoes(){
@@ -2009,6 +2012,7 @@ import { getDatabase, ref, set, onValue, get } from 'https://www.gstatic.com/fir
   window.pushToFirebase = function(){
     const payload = {_version: FB_VERSION, _updated: Date.now()};
     KEYS.forEach(k=>{ payload[k] = S[k]; });
+    KEYS_CONFIG.forEach(k=>{ payload[k] = S[k]; }); // backup da config
     set(dbRef, payload)
       .then(()=>showSyncStatus(true))
       .catch(e=>{ console.warn('Firebase sync error:',e); showSyncStatus(false); });
@@ -2018,7 +2022,8 @@ import { getDatabase, ref, set, onValue, get } from 'https://www.gstatic.com/fir
   get(dbRef).then(snapshot=>{
     const data = snapshot.val();
     if(data && data._version === FB_VERSION){
-      // Versão correta — carrega dados do Firebase
+      // Versão correta — carrega só dados transacionais do Firebase
+      // Fixos/parcs/emprestimos usam defaults do código (evita sobrescrever configuração)
       KEYS.forEach(k=>{ if(data[k]!==undefined){ S[k]=data[k]; try{localStorage.setItem(k,JSON.stringify(data[k]));}catch{} } });
       aplicaMigracoes();
       showSyncStatus(true);
@@ -2055,6 +2060,7 @@ import { getDatabase, ref, set, onValue, get } from 'https://www.gstatic.com/fir
           if(remote !== local){ S[k]=data[k]; changed=true; }
         }
       });
+      // Não sobrescreve KEYS_CONFIG — cada dispositivo mantém sua configuração local
       if(changed){
         aplicaMigracoes();
         showSyncStatus(true);
