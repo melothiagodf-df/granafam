@@ -739,7 +739,7 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
 </div>
 
 <script>
-const DATA_VERSION = '2026-07-v13';
+const DATA_VERSION = '2026-07-v15';
 
 
 const MNS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
@@ -1058,77 +1058,81 @@ function getGastosCategoria(cats, m1){
     .reduce((a,g)=>a+(g.val||0),0);
 }
 
-const CONSUMIVEIS_CATS = ['combustivel','remedios','diarista'];
+const CONSUMIVEIS_CATS = ['combustivel','remedios'];
 
 function calcTotais(m1){
   const ciclo = getCiclo(m1)||getCiclo(m1-1)||{ini:'2000-01-01',fim:'2999-01-01'};
 
-  // ── Fixos normais (SEM consumíveis, SEM descontadoFolha) ─────────────────
-  const tFixCartNormal = S.fixosCart
-    .filter(f=>!f.descontadoFolha && !f.consumivel)
-    .reduce((a,f)=>a+(f.val||0),0);
-  const tFixContaNormal = S.fixosConta
-    .filter(f=>!f.descontadoFolha && !f.consumivel)
-    .reduce((a,f)=>a+(f.val||0),0);
-  const tFixosNormais = tFixCartNormal + tFixContaNormal;
+  // ── Renda ─────────────────────────────────────────────────────────────────
+  const extra    = getRendaExtra(m1);
+  const renda    = S.renda.t + S.renda.n + (S.renda.e||0) + extra;
+  const tTerc    = S.tercParcs.reduce((a,p)=>{
+    if(!p.mesInicio) return a;
+    return m1>=p.mesInicio&&m1<=p.mesInicio+(p.qtdRestante||0)-1 ? a+(p.valParc||0) : a;
+  },0);
+  const creditos = renda + tTerc;
 
-  // ── Provisão consumível total ─────────────────────────────────────────────
+  // ── Parcelas ──────────────────────────────────────────────────────────────
+  const tParcs = S.parcs.reduce((a,p)=>{
+    if(!p.mesInicio) return a;
+    const mEnd = p.mesInicio + p.qtdTotal - 1;
+    return m1>=p.mesInicio && m1<=mEnd ? a+(p.valParc||0) : a;
+  },0);
+
+  // ── Empréstimos ───────────────────────────────────────────────────────────
+  const tEmp = S.emprestimos.filter(e=>!e.consignado).reduce((a,e)=>a+(e.parcela||0),0);
+
+  // ── Fixos TODOS exceto descontadoFolha (para saldo inicial) ──────────────
+  const tFixCartTodos  = S.fixosCart.filter(f=>!f.descontadoFolha).reduce((a,f)=>a+(f.val||0),0);
+  const tFixContaTodos = S.fixosConta.filter(f=>!f.descontadoFolha).reduce((a,f)=>a+(f.val||0),0);
+  const tFixosTodos    = tFixCartTodos + tFixContaTodos;
+
+  // ── Fixos SEM consumíveis exceto descontadoFolha (para saldo atual) ──────
+  const tFixCartSemCons  = S.fixosCart.filter(f=>!f.descontadoFolha&&!f.consumivel).reduce((a,f)=>a+(f.val||0),0);
+  const tFixContaSemCons = S.fixosConta.filter(f=>!f.descontadoFolha&&!f.consumivel).reduce((a,f)=>a+(f.val||0),0);
+  const tFixosSemCons    = tFixCartSemCons + tFixContaSemCons;
+
+  // ── Gastos efetivados no ciclo ────────────────────────────────────────────
+  const todosGastos  = S.gastos.filter(g=>g.data>=ciclo.ini&&g.data<=ciclo.fim);
+  const gastoCiclo   = todosGastos.reduce((a,g)=>a+(g.val||0),0);
+  const gCombustivel = todosGastos.filter(g=>g.cat==='combustivel').reduce((a,g)=>a+(g.val||0),0);
+  const gRemedios    = todosGastos.filter(g=>g.cat==='remedios').reduce((a,g)=>a+(g.val||0),0);
+  const gDiarista    = todosGastos.filter(g=>g.cat==='diarista').reduce((a,g)=>a+(g.val||0),0);
+
+  // ── Provisões (para cards de acompanhamento) ──────────────────────────────
   const _fcomb = S.fixosCart.find(f=>f.consumivel==='combustivel');
   const _frem  = S.fixosCart.find(f=>f.consumivel==='remedios');
   const _fdiar = S.fixosConta.find(f=>f.consumivel==='diarista');
   const provisaoCombustivel = _fcomb ? (_fcomb.val||0) : 0;
   const provisaoRemedios    = _frem  ? (_frem.val||0)  : 0;
   const provisaoDiarista    = _fdiar ? (_fdiar.val||0) : 0;
-  const tProvisao = provisaoCombustivel + provisaoRemedios + provisaoDiarista;
 
-  // ── Empréstimos e parcelas ────────────────────────────────────────────────
-  const tEmp = S.emprestimos.filter(e=>!e.consignado)
-    .reduce((a,e)=>a+(e.parcela||0),0);
-  const tParcs = S.parcs.reduce((a,p)=>{
-    if(!p.mesInicio) return a;
-    const mEnd = p.mesInicio+p.qtdTotal-1;
-    return m1>=p.mesInicio&&m1<=mEnd ? a+(p.valParc||0) : a;
-  },0);
+  // ── SALDO INICIAL: creditos - todos os fixos - emp - parcs ────────────────
+  const debitosIniciais = tFixosTodos + tEmp + tParcs;
+  const saldoInicial    = creditos - debitosIniciais;
 
-  // ── Gastos efetivados no ciclo ────────────────────────────────────────────
-  const todosGastos = S.gastos.filter(g=>g.data>=ciclo.ini&&g.data<=ciclo.fim);
-  const gastoCiclo  = todosGastos.reduce((a,g)=>a+(g.val||0),0);
-
-  // Gastos consumíveis efetivados (para chips de progressão)
-  const gCombustivel = todosGastos.filter(g=>g.cat==='combustivel').reduce((a,g)=>a+(g.val||0),0);
-  const gRemedios    = todosGastos.filter(g=>g.cat==='remedios').reduce((a,g)=>a+(g.val||0),0);
-  const gDiarista    = todosGastos.filter(g=>g.cat==='diarista').reduce((a,g)=>a+(g.val||0),0);
-
-  // ── Renda ─────────────────────────────────────────────────────────────────
-  const extra = getRendaExtra(m1);
-  const renda = S.renda.t + S.renda.n + (S.renda.e||0) + extra;
-
-  // ── DISPONÍVEL: reserva provisão completa (independe do que foi lançado) ──
-  const totalComPromissos = tFixosNormais + tEmp + tParcs + tProvisao;
-  const disp = renda - totalComPromissos;
-
-  // ── SALDO REAL: fixos normais + emp + parcs + tudo que foi efetivado ──────
-  const totalReal = tFixosNormais + tEmp + tParcs + gastoCiclo;
-  const saldo = renda - totalReal;
-
-  // Provisão restante por item
-  const provRestCombustivel = Math.max(0, provisaoCombustivel - gCombustivel);
-  const provRestRemedios    = Math.max(0, provisaoRemedios    - gRemedios);
-  const provRestDiarista    = Math.max(0, provisaoDiarista    - gDiarista);
-
-  // Para compatibilidade com o resto do código
-  const tFixCart  = tFixCartNormal  + provisaoCombustivel + provisaoRemedios;
-  const tFixConta = tFixContaNormal + provisaoDiarista;
-  const tFixos    = tFixosNormais;
-  const tGastos   = gastoCiclo;
+  // ── SALDO ATUAL: creditos - fixos sem consumíveis - emp - parcs - gastos ──
+  const debitosAtuais = tFixosSemCons + tEmp + tParcs + gastoCiclo;
+  const saldoAtual    = creditos - debitosAtuais;
 
   return {
-    tFixos, tFixCart, tFixConta, tFixosNormais, tEmp, tParcs,
-    tProvisao, tGastos, gastoCiclo,
+    // Valores principais
+    renda, creditos, tTerc,
+    tFixCart: tFixCartTodos, tFixConta: tFixContaTodos,
+    tFixos: tFixosTodos, tFixosTodos, tFixosSemCons,
+    tEmp, tParcs, gastoCiclo, tGastos: gastoCiclo,
+    // Consumíveis
     gCombustivel, gRemedios, gDiarista,
-    provRestCombustivel, provRestRemedios, provRestDiarista,
-    total: totalComPromissos, totalReal,
-    renda, disp, saldo
+    provisaoCombustivel, provisaoRemedios, provisaoDiarista,
+    provRestCombustivel: Math.max(0, provisaoCombustivel - gCombustivel),
+    provRestRemedios:    Math.max(0, provisaoRemedios    - gRemedios),
+    provRestDiarista:    Math.max(0, provisaoDiarista    - gDiarista),
+    // Saldos — nomes explícitos para evitar confusão
+    debitosIniciais, saldoInicial,
+    debitosAtuais,   saldoAtual,
+    // Aliases de compatibilidade
+    total: debitosIniciais, totalReal: debitosAtuais,
+    disp: saldoInicial, saldo: saldoAtual
   };
 }
 
@@ -1977,7 +1981,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, set, onValue, get } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
 (function(){
-  const FB_VERSION = '2026-07-v6';
+  const FB_VERSION = '2026-07-v8';
   const fbConfig = {
     apiKey: "AIzaSyCPvz65aVIn9lxIALc4BcOY20PevqXStVA",
     authDomain: "app-financeiro-6fad9.firebaseapp.com",
