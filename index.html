@@ -265,20 +265,15 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
 
     <!-- VISÃO GERAL -->
     <div id="v-dash" class="view on">
-      <!-- Provisões consumíveis -->
-      <div id="dash-provisao" style="display:none;margin-bottom:12px">
-        <div style="display:flex;gap:8px;flex-wrap:wrap" id="dash-provisao-chips"></div>
-      </div>
-
       <div class="warn-card" id="dash-warn" style="display:none">
         <div class="warn-title">⚠ Contas a vencer nos próximos 10 dias</div>
         <div id="dash-warn-list"></div>
       </div>
       <div class="g4">
         <div class="card csm"><div class="c-lbl">Renda Familiar</div><div class="c-val b" id="d-renda">R$ 16.500</div><div class="c-sub" id="d-renda-sub">Thiago + Nataly</div></div>
-        <div class="card csm"><div class="c-lbl">Compromissos</div><div class="c-val r" id="d-comp">—</div><div class="c-sub">Fixos + Financ. + Parcelas + Provisão</div></div>
-        <div class="card csm"><div class="c-lbl">Disponível p/ Gastar</div><div class="c-val g" id="d-disp">—</div><div class="c-sub">Após reservar provisões</div></div>
-        <div class="card csm"><div class="c-lbl">Saldo Real do Mês</div><div class="c-val" id="d-saldo">—</div><div class="c-sub" id="d-saldo-sub">Só o que foi efetivado</div></div>
+        <div class="card csm"><div class="c-lbl">Compromissos Fixos</div><div class="c-val r" id="d-comp">—</div><div class="c-sub">Fixos + Financ. + Parcelas</div></div>
+        <div class="card csm"><div class="c-lbl">Saldo Inicial do Mês</div><div class="c-val g" id="d-disp">—</div><div class="c-sub">Antes dos gastos variáveis</div></div>
+        <div class="card csm"><div class="c-lbl">Saldo Atual do Mês</div><div class="c-val" id="d-saldo">—</div><div class="c-sub" id="d-saldo-sub">Com gastos lançados</div></div>
       </div>
       <div class="card" style="margin-bottom:16px">
         <div class="sh"><span class="sh-t">Gastos Semanais — <span id="dash-ciclo-lbl"></span></span><span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted)" id="dash-ciclo-datas"></span></div>
@@ -397,6 +392,8 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
 
     <!-- GASTOS FIXOS -->
     <div id="v-fixos" class="view">
+      <!-- Cards de acompanhamento consumíveis -->
+      <div class="g2" id="fixos-consumiveis-cards" style="margin-bottom:16px"></div>
       <div class="card" style="margin-bottom:16px">
         <div class="sh"><span class="sh-t">Fixos — Cartão de Crédito</span><button class="sh-btn" onclick="openM('fixo-add','cartao')">+ Adicionar</button></div>
         <table class="fixos-tbl" id="fixos-cart-tbl"></table>
@@ -404,6 +401,10 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
       <div class="card">
         <div class="sh"><span class="sh-t">Fixos — Débito em Conta</span><button class="sh-btn" onclick="openM('fixo-add','conta')">+ Adicionar</button></div>
         <table class="fixos-tbl" id="fixos-conta-tbl"></table>
+      </div>
+      <div class="card" style="margin-top:0">
+        <div class="sh"><span class="sh-t">Resumo por Categoria</span></div>
+        <div id="fixos-cat-resumo"></div>
       </div>
     </div>
 
@@ -738,7 +739,7 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
 </div>
 
 <script>
-const DATA_VERSION = '2026-07-v9';
+const DATA_VERSION = '2026-07-v11';
 
 
 const MNS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
@@ -890,32 +891,32 @@ let S = {
     {id:153,data:'2026-05-08',desc:'Ifd*gabriel Lopes Amar',val:27.98,cat:'alimentacao',cart:'BRB Black'}
   ]),
   fixosCart: ld('fixosCart', [
-    {id:1,desc:'Seguro Auto',val:229.43,cat:'transporte',variavel:false,meio:'Cartão de crédito'},
-    {id:2,desc:'Academia Thiago',val:170.0,cat:'lazer',variavel:false,meio:'Cartão de crédito'},
-    {id:3,desc:'Ginástica Júlia',val:253.0,cat:'lazer',variavel:false,meio:'Cartão de crédito'},
+    {id:1,desc:'Seguro Auto',val:229.43,cat:'seguros',variavel:false,meio:'Cartão de crédito'},
+    {id:2,desc:'Academia Thiago',val:170.0,cat:'atividades',variavel:false,meio:'Cartão de crédito'},
+    {id:3,desc:'Ginástica Júlia',val:253.0,cat:'atividades',variavel:false,meio:'Cartão de crédito'},
     {id:4,desc:'Assinatura Google',val:4.5,cat:'assinatura',variavel:false,meio:'Cartão de crédito'},
     {id:5,desc:'Assinatura Apple',val:66.9,cat:'assinatura',variavel:false,meio:'Cartão de crédito'},
     {id:6,desc:'Lightroom',val:8.5,cat:'assinatura',variavel:false,meio:'Cartão de crédito'},
     {id:7,desc:'Spotify',val:30.0,cat:'assinatura',variavel:false,meio:'Cartão de crédito'},
-    {id:8,desc:'Telefone',val:79.8,cat:'moradia',variavel:false,meio:'Cartão de crédito'},
-    {id:9,desc:'Combustível',val:700.0,cat:'transporte',variavel:true,meio:'Cartão de crédito',consumivel:'combustivel'},
-    {id:10,desc:'Xbox',val:36.0,cat:'assinatura',variavel:false,meio:'Cartão de crédito'},
+    {id:8,desc:'Telefone',val:79.8,cat:'despesas_casa',variavel:false,meio:'Cartão de crédito'},
+    {id:9,desc:'Combustível',val:700.0,cat:'carro',variavel:true,meio:'Cartão de crédito',consumivel:'combustivel'},
+    {id:10,desc:'Xbox',val:36.0,cat:'diversao',variavel:false,meio:'Cartão de crédito'},
     {id:11,desc:'Fotoclube',val:39.8,cat:'assinatura',variavel:false,meio:'Cartão de crédito'},
     {id:12,desc:'Remédios',val:1200.0,cat:'saude',variavel:true,meio:'Cartão de crédito',consumivel:'remedios'},
     {id:13,desc:'Estácio',val:120.0,cat:'educacao',variavel:false,meio:'Cartão de crédito'},
     {id:25,desc:'Meli +',val:19.9,cat:'assinatura',variavel:false,meio:'Cartão de crédito'}
   ]),
   fixosConta: ld('fixosConta', [
-    {id:14,desc:'Condomínio',val:680.0,cat:'moradia',variavel:false,meio:'Débito em conta'},
-    {id:15,desc:'Água',val:112.02,cat:'moradia',variavel:true,meio:'Débito em conta'},
-    {id:16,desc:'Luz',val:158.18,cat:'moradia',variavel:true,meio:'Débito em conta'},
-    {id:17,desc:'Gás',val:40.0,cat:'moradia',variavel:true,meio:'Débito em conta'},
-    {id:18,desc:'Internet',val:130.0,cat:'moradia',variavel:false,meio:'Débito em conta'},
+    {id:14,desc:'Condomínio',val:680.0,cat:'despesas_casa',variavel:false,meio:'Débito em conta'},
+    {id:15,desc:'Água',val:112.02,cat:'despesas_casa',variavel:true,meio:'Débito em conta'},
+    {id:16,desc:'Luz',val:158.18,cat:'despesas_casa',variavel:true,meio:'Débito em conta'},
+    {id:17,desc:'Gás',val:40.0,cat:'despesas_casa',variavel:true,meio:'Débito em conta'},
+    {id:18,desc:'Internet',val:130.0,cat:'despesas_casa',variavel:false,meio:'Débito em conta'},
     {id:19,desc:'Creche',val:1018.0,cat:'educacao',variavel:false,meio:'Débito em conta'},
-    {id:20,desc:'INSS Nataly',val:400.0,cat:'outro',variavel:false,meio:'Débito em conta'},
+    {id:20,desc:'INSS Nataly',val:400.0,cat:'impostos',variavel:false,meio:'Débito em conta'},
     {id:21,desc:'Coparticipação',val:600.0,cat:'saude',variavel:true,meio:'Débito em conta'},
-    {id:22,desc:'Diarista',val:720.0,cat:'moradia',variavel:false,meio:'Débito em conta',consumivel:'diarista'},
-    {id:23,desc:'Seguro residencial',val:37.9,cat:'moradia',variavel:false,meio:'Débito em conta'},
+    {id:22,desc:'Diarista',val:720.0,cat:'despesas_casa',variavel:false,meio:'Débito em conta',consumivel:'diarista'},
+    {id:23,desc:'Seguro residencial',val:37.9,cat:'seguros',variavel:false,meio:'Débito em conta'},
     {id:24,desc:'IPTV',val:30.0,cat:'assinatura',variavel:false,meio:'Débito em conta'},
     {id:25,desc:'Plano de Saúde',val:523.0,cat:'saude',variavel:false,meio:'Desconto em folha',descontadoFolha:true}
   ]),
@@ -1072,9 +1073,12 @@ function calcTotais(m1){
   const tFixosNormais = tFixCartNormal + tFixContaNormal;
 
   // ── Provisão consumível total ─────────────────────────────────────────────
-  const provisaoCombustivel = S.fixosCart.find(f=>f.consumivel==='combustivel')?.val||0;
-  const provisaoRemedios    = S.fixosCart.find(f=>f.consumivel==='remedios')?.val||0;
-  const provisaoDiarista    = S.fixosConta.find(f=>f.consumivel==='diarista')?.val||0;
+  const _fcomb = S.fixosCart.find(f=>f.consumivel==='combustivel');
+  const _frem  = S.fixosCart.find(f=>f.consumivel==='remedios');
+  const _fdiar = S.fixosConta.find(f=>f.consumivel==='diarista');
+  const provisaoCombustivel = _fcomb ? (_fcomb.val||0) : 0;
+  const provisaoRemedios    = _frem  ? (_frem.val||0)  : 0;
+  const provisaoDiarista    = _fdiar ? (_fdiar.val||0) : 0;
   const tProvisao = provisaoCombustivel + provisaoRemedios + provisaoDiarista;
 
   // ── Empréstimos e parcelas ────────────────────────────────────────────────
@@ -1142,43 +1146,12 @@ function rDash(){
   const extraTxt=extra>0?` + extra ${fmt(extra)}`:'';
   const subRenda=`Thiago ${fmtDt(cicloInfo.salThiago)} · Nataly ${fmtDt(cicloInfo.salNataly)}${extraTxt}`;
   document.getElementById('d-renda-sub').textContent=subRenda;
-  document.getElementById('d-comp').textContent=fmt(t.total);
-  const eD=document.getElementById('d-disp');eD.textContent=fmt(Math.max(t.disp,0));eD.className='c-val '+(t.disp>=0?'g':'r');
-  const eS=document.getElementById('d-saldo');eS.textContent=fmt(Math.abs(t.saldo));eS.className='c-val '+(t.saldo>=0?'g':'r');
-  document.getElementById('d-saldo-sub').innerHTML=`<span class="${t.saldo>=0?'up':'dn'}">${t.saldo>=0?'↑':'↓'} ${((Math.abs(t.saldo)/t.renda)*100).toFixed(1)}%</span>`;
+  document.getElementById('d-comp').textContent=fmt(t.debitosIniciais);
+  const eD=document.getElementById('d-disp');eD.textContent=fmt(t.saldoInicial);eD.className='c-val '+(t.saldoInicial>=0?'g':'r');
+  const eS=document.getElementById('d-saldo');eS.textContent=fmt(Math.abs(t.saldoAtual));eS.className='c-val '+(t.saldoAtual>=0?'g':'r');
+  document.getElementById('d-saldo-sub').innerHTML=`<span class="${t.saldoAtual>=0?'up':'dn'}">${t.saldoAtual>=0?'↑':'↓'} ${t.saldoAtual>=0?'sobra':'falta'} ${((Math.abs(t.saldoAtual)/t.renda)*100).toFixed(1)}% da renda</span>`;
 
-  // Chips de provisão consumível
-  const chips = [
-    {nome:'⛽ Combustível', total: t.provRestCombustivel + t.gCombustivel,
-     rest: t.provRestCombustivel, gasto: t.gCombustivel},
-    {nome:'💉 Remédios',    total: t.provRestRemedios + t.gRemedios,
-     rest: t.provRestRemedios,    gasto: t.gRemedios},
-    {nome:'🧹 Diarista',    total: t.provRestDiarista + t.gDiarista,
-     rest: t.provRestDiarista,    gasto: t.gDiarista},
-  ].filter(c=>c.total>0);
-  const provDiv = document.getElementById('dash-provisao');
-  if(chips.length){
-    provDiv.style.display='block';
-    document.getElementById('dash-provisao-chips').innerHTML = chips.map(c=>{
-      const pct = c.total>0?Math.round((c.gasto/c.total)*100):0;
-      const cor = pct>90?'var(--red)':pct>60?'var(--gold)':'var(--green)';
-      return `<div style="background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:160px;flex:1">
-        <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:5px">${c.nome}</div>
-        <div style="display:flex;justify-content:space-between;margin-bottom:5px">
-          <span style="font-family:'DM Serif Display',serif;font-size:16px">${fmt(c.gasto)}</span>
-          <span style="font-size:11px;color:var(--muted)">de ${fmt(c.total)}</span>
-        </div>
-        <div style="height:5px;background:var(--warm);border-radius:3px;overflow:hidden">
-          <div style="height:100%;width:${pct}%;background:${cor};border-radius:3px;transition:width .4s"></div>
-        </div>
-        <div style="font-size:10px;color:var(--muted);margin-top:3px;font-family:'DM Mono',monospace">
-          sobram ${fmt(c.rest)}
-        </div>
-      </div>`;
-    }).join('');
-  } else {
-    provDiv.style.display='none';
-  }
+
   // Ciclo — detecta automaticamente o ciclo com gastos recentes
   let cicloM1=m1;
   const cicloAtual=getCiclo(m1);
@@ -1370,6 +1343,52 @@ function rSem(){
 
 // ── GASTOS FIXOS ─────────────────────────────────────────────────────────────
 function rFixos(){
+  // ── Cards de Combustível e Remédios ───────────────────────────────────────
+  const m1 = CM+1;
+  const ciclo = getCiclo(m1)||getCiclo(m1-1)||{ini:'2000-01-01',fim:'2999-01-01'};
+  const gastosC = S.gastos.filter(g=>g.data>=ciclo.ini&&g.data<=ciclo.fim);
+  const consumiveis = [
+    {
+      nome:'⛽ Combustível', cat:'combustivel', cor:'#a07c20',
+      provisao: (S.fixosCart.find(f=>f.consumivel==='combustivel')||{val:0}).val||0,
+      gasto: gastosC.filter(g=>g.cat==='combustivel').reduce((a,g)=>a+(g.val||0),0)
+    },
+    {
+      nome:'💉 Remédios', cat:'remedios', cor:'#7c3aed',
+      provisao: (S.fixosCart.find(f=>f.consumivel==='remedios')||{val:0}).val||0,
+      gasto: gastosC.filter(g=>g.cat==='remedios').reduce((a,g)=>a+(g.val||0),0)
+    },
+  ].filter(c=>c.provisao>0);
+
+  const cardsEl = document.getElementById('fixos-consumiveis-cards');
+  if(cardsEl && consumiveis.length){
+    cardsEl.innerHTML = consumiveis.map(c=>{
+      const pct   = c.provisao>0?Math.min(Math.round((c.gasto/c.provisao)*100),100):0;
+      const resto = Math.max(0, c.provisao - c.gasto);
+      const cor   = pct>=100?'var(--red)':pct>=70?'var(--gold)':c.cor;
+      const gastos = gastosC.filter(g=>g.cat===c.cat).sort((a,b)=>b.data.localeCompare(a.data));
+      const linhas = gastos.map(g=>`
+        <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px">
+          <span style="color:var(--muted)">${fmtDate(g.data)} · ${g.desc}</span>
+          <span style="font-family:'DM Mono',monospace">${fmt(g.val)}</span>
+        </div>`).join('');
+      return `<div class="card">
+        <div class="sh"><span class="sh-t">${c.nome}</span></div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+          <div><div class="c-lbl">Gasto</div><div style="font-family:'DM Serif Display',serif;font-size:22px">${fmt(c.gasto)}</div></div>
+          <div style="text-align:right"><div class="c-lbl">Provisão</div><div style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--muted)">${fmt(c.provisao)}</div></div>
+        </div>
+        <div style="height:8px;background:var(--warm);border-radius:4px;overflow:hidden;margin-bottom:6px">
+          <div style="height:100%;width:${pct}%;background:${cor};border-radius:4px;transition:width .5s"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:12px">
+          <span>${pct}% utilizado</span><span>sobram ${fmt(resto)}</span>
+        </div>
+        ${linhas||'<div style="font-size:12px;color:var(--muted);padding:8px 0">Nenhum gasto lançado ainda</div>'}
+      </div>`;
+    }).join('');
+  }
+
   function buildTbl(items, store, elId){
     const tot=items.filter(f=>!f.descontadoFolha).reduce((a,f)=>a+(f.val||0),0);
     let h=`<thead><tr><th>Descrição</th><th>Categoria</th><th>Tipo</th><th style="text-align:right">Valor</th><th></th></tr></thead><tbody>`;
@@ -1385,6 +1404,40 @@ function rFixos(){
   }
   buildTbl(S.fixosCart,'fixosCart','fixos-cart-tbl');
   buildTbl(S.fixosConta,'fixosConta','fixos-conta-tbl');
+
+  // ── Resumo por categoria ──────────────────────────────────────────────────
+  const todos = [...S.fixosCart,...S.fixosConta].filter(f=>!f.descontadoFolha);
+  const cats  = {};
+  todos.forEach(f=>{
+    const c = f.cat||'outro';
+    cats[c] = (cats[c]||0) + (f.val||0);
+  });
+  const catLabels = {
+    seguros:'🛡️ Seguros', atividades:'🏃 Atividades Físicas',
+    assinatura:'📱 Assinaturas', despesas_casa:'🏠 Despesas Casa',
+    carro:'🚗 Carro', diversao:'🎮 Diversão', saude:'🏥 Saúde',
+    educacao:'📚 Educação', impostos:'📋 Impostos', outro:'📦 Outros'
+  };
+  const total_cats = Object.values(cats).reduce((a,v)=>a+v,0);
+  const resumoEl = document.getElementById('fixos-cat-resumo');
+  if(resumoEl){
+    resumoEl.innerHTML = Object.entries(cats)
+      .sort((a,b)=>b[1]-a[1])
+      .map(([c,v])=>{
+        const pct = total_cats>0?Math.round((v/total_cats)*100):0;
+        const lbl = catLabels[c]||('📦 '+c);
+        return `<div style="margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+            <span style="font-size:13px;font-weight:500">${lbl}</span>
+            <span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--red)">${fmt(v)}</span>
+          </div>
+          <div style="height:5px;background:var(--warm);border-radius:3px;overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:var(--accent);border-radius:3px"></div>
+          </div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px;font-family:'DM Mono',monospace">${pct}% dos fixos</div>
+        </div>`;
+      }).join('');
+  }
 }
 function updFixo(store,id,key,v){const f=S[store].find(f=>f.id===id);if(f){f[key]=key==='val'?parseFloat(v)||0:v;persist();}}
 function delFixo(store,id){S[store]=S[store].filter(f=>f.id!==id);persist();rFixos();}
@@ -1924,7 +1977,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, set, onValue, get } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
 (function(){
-  const FB_VERSION = '2026-07-v3';
+  const FB_VERSION = '2026-07-v4';
   const fbConfig = {
     apiKey: "AIzaSyCPvz65aVIn9lxIALc4BcOY20PevqXStVA",
     authDomain: "app-financeiro-6fad9.firebaseapp.com",
@@ -1962,6 +2015,18 @@ import { getDatabase, ref, set, onValue, get } from 'https://www.gstatic.com/fir
           changed = true;
         }
       });
+      // Garante flags consumivel nos fixos (podem ter sido perdidos no Firebase)
+      if(S.fixosCart){
+        S.fixosCart.forEach(f=>{
+          if(f.desc==='Combustível' && !f.consumivel) f.consumivel='combustivel';
+          if((f.desc==='Remédio'||f.desc==='Remédios') && !f.consumivel) f.consumivel='remedios';
+        });
+      }
+      if(S.fixosConta){
+        S.fixosConta.forEach(f=>{
+          if(f.desc==='Diarista' && !f.consumivel) f.consumivel='diarista';
+        });
+      }
       if(changed){
         showSyncStatus(true);
         rDash();
