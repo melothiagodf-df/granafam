@@ -265,15 +265,20 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
 
     <!-- VISÃO GERAL -->
     <div id="v-dash" class="view on">
+      <!-- Provisões consumíveis -->
+      <div id="dash-provisao" style="display:none;margin-bottom:12px">
+        <div style="display:flex;gap:8px;flex-wrap:wrap" id="dash-provisao-chips"></div>
+      </div>
+
       <div class="warn-card" id="dash-warn" style="display:none">
         <div class="warn-title">⚠ Contas a vencer nos próximos 10 dias</div>
         <div id="dash-warn-list"></div>
       </div>
       <div class="g4">
         <div class="card csm"><div class="c-lbl">Renda Familiar</div><div class="c-val b" id="d-renda">R$ 16.500</div><div class="c-sub" id="d-renda-sub">Thiago + Nataly</div></div>
-        <div class="card csm"><div class="c-lbl">Compromissos</div><div class="c-val r" id="d-comp">—</div><div class="c-sub">Fixos + Financ. + Parcelas</div></div>
-        <div class="card csm"><div class="c-lbl">Disponível</div><div class="c-val g" id="d-disp">—</div><div class="c-sub">Para gastar no ciclo</div></div>
-        <div class="card csm"><div class="c-lbl">Saldo do Mês</div><div class="c-val" id="d-saldo">—</div><div class="c-sub" id="d-saldo-sub"></div></div>
+        <div class="card csm"><div class="c-lbl">Compromissos</div><div class="c-val r" id="d-comp">—</div><div class="c-sub">Fixos + Financ. + Parcelas + Provisão</div></div>
+        <div class="card csm"><div class="c-lbl">Disponível p/ Gastar</div><div class="c-val g" id="d-disp">—</div><div class="c-sub">Após reservar provisões</div></div>
+        <div class="card csm"><div class="c-lbl">Saldo Real do Mês</div><div class="c-val" id="d-saldo">—</div><div class="c-sub" id="d-saldo-sub">Só o que foi efetivado</div></div>
       </div>
       <div class="card" style="margin-bottom:16px">
         <div class="sh"><span class="sh-t">Gastos Semanais — <span id="dash-ciclo-lbl"></span></span><span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted)" id="dash-ciclo-datas"></span></div>
@@ -733,7 +738,7 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
 </div>
 
 <script>
-const DATA_VERSION = '2026-07-v6';
+const DATA_VERSION = '2026-07-v7';
 
 
 const MNS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
@@ -1114,6 +1119,39 @@ function rDash(){
   const eD=document.getElementById('d-disp');eD.textContent=fmt(Math.max(t.disp,0));eD.className='c-val '+(t.disp>=0?'g':'r');
   const eS=document.getElementById('d-saldo');eS.textContent=fmt(Math.abs(t.saldo));eS.className='c-val '+(t.saldo>=0?'g':'r');
   document.getElementById('d-saldo-sub').innerHTML=`<span class="${t.saldo>=0?'up':'dn'}">${t.saldo>=0?'↑':'↓'} ${((Math.abs(t.saldo)/t.renda)*100).toFixed(1)}%</span>`;
+
+  // Chips de provisão consumível
+  const chips = [
+    {nome:'⛽ Combustível', total: t.provRestCombustivel + t.gCombustivel,
+     rest: t.provRestCombustivel, gasto: t.gCombustivel},
+    {nome:'💉 Remédios',    total: t.provRestRemedios + t.gRemedios,
+     rest: t.provRestRemedios,    gasto: t.gRemedios},
+    {nome:'🧹 Diarista',    total: t.provRestDiarista + t.gDiarista,
+     rest: t.provRestDiarista,    gasto: t.gDiarista},
+  ].filter(c=>c.total>0);
+  const provDiv = document.getElementById('dash-provisao');
+  if(chips.length){
+    provDiv.style.display='block';
+    document.getElementById('dash-provisao-chips').innerHTML = chips.map(c=>{
+      const pct = c.total>0?Math.round((c.gasto/c.total)*100):0;
+      const cor = pct>90?'var(--red)':pct>60?'var(--gold)':'var(--green)';
+      return `<div style="background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:160px;flex:1">
+        <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:5px">${c.nome}</div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+          <span style="font-family:'DM Serif Display',serif;font-size:16px">${fmt(c.gasto)}</span>
+          <span style="font-size:11px;color:var(--muted)">de ${fmt(c.total)}</span>
+        </div>
+        <div style="height:5px;background:var(--warm);border-radius:3px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:${cor};border-radius:3px;transition:width .4s"></div>
+        </div>
+        <div style="font-size:10px;color:var(--muted);margin-top:3px;font-family:'DM Mono',monospace">
+          sobram ${fmt(c.rest)}
+        </div>
+      </div>`;
+    }).join('');
+  } else {
+    provDiv.style.display='none';
+  }
   // Ciclo — detecta automaticamente o ciclo com gastos recentes
   let cicloM1=m1;
   const cicloAtual=getCiclo(m1);
