@@ -739,7 +739,7 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
 </div>
 
 <script>
-const DATA_VERSION = '2026-07-v15';
+const DATA_VERSION = '2026-07-v16';
 
 
 const MNS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
@@ -786,11 +786,11 @@ function showSyncStatus(ok) {
 const CICLOS = {
   6:{ini:'2026-04-08',fim:'2026-05-07', salThiago:'2026-05-20', salNataly:'2026-06-01'},
   7:{ini:'2026-05-08',fim:'2026-06-09', salThiago:'2026-06-20', salNataly:'2026-07-01'},
-  8:{ini:'2026-06-09',fim:'2026-07-07', salThiago:'2026-07-20', salNataly:'2026-08-01'},
-  9:{ini:'2026-07-07',fim:'2026-08-07', salThiago:'2026-08-20', salNataly:'2026-09-01'},
-  10:{ini:'2026-08-07',fim:'2026-09-08', salThiago:'2026-09-20', salNataly:'2026-10-01'},
-  11:{ini:'2026-09-08',fim:'2026-10-07', salThiago:'2026-10-20', salNataly:'2026-11-01'},
-  12:{ini:'2026-10-07',fim:'2026-11-09', salThiago:'2026-11-20', salNataly:'2026-12-01'},
+  8:{ini:'2026-06-10',fim:'2026-07-07', salThiago:'2026-07-20', salNataly:'2026-08-01'},
+  9:{ini:'2026-07-08',fim:'2026-08-07', salThiago:'2026-08-20', salNataly:'2026-09-01'},
+  10:{ini:'2026-08-08',fim:'2026-09-08', salThiago:'2026-09-20', salNataly:'2026-10-01'},
+  11:{ini:'2026-09-09',fim:'2026-10-07', salThiago:'2026-10-20', salNataly:'2026-11-01'},
+  12:{ini:'2026-10-08',fim:'2026-11-09', salThiago:'2026-11-20', salNataly:'2026-12-01'},
 };
 function getCiclo(m1){return CICLOS[m1]||CICLOS[7];}
 function getSemanas(m1){
@@ -835,60 +835,60 @@ function resetLocal(){
 let S = {
   renda: ld('renda',{t:8500,n:8000,e:0}),
   gastos: ld('gastos', [
-    {id:100,data:'2026-05-24',desc:'Carrefour Hac',val:100.44,cat:'mercado',cart:'BRB Black'},
-    {id:101,data:'2026-05-24',desc:'Ciatoy 14',val:29.0,cat:'julia',cart:'BRB Black'},
+    {id:100,data:'2026-05-24',desc:'Carrefour Hac',val:100.44,cat:'supermercado',cart:'BRB Black'},
+    {id:101,data:'2026-05-24',desc:'Ciatoy 14',val:29.0,cat:'julia_brinquedos',cart:'BRB Black'},
     {id:102,data:'2026-05-24',desc:'R3bomboniereltda',val:4.9,cat:'alimentacao',cart:'BRB Black'},
     {id:103,data:'2026-05-24',desc:'Divino Fogao',val:90.98,cat:'alimentacao',cart:'BRB Black'},
     {id:104,data:'2026-05-24',desc:'Padano Padaria E Confe',val:14.92,cat:'alimentacao',cart:'BRB Black'},
-    {id:105,data:'2026-05-24',desc:'Dona Aguas Claras 2',val:45.57,cat:'mercado',cart:'BRB Black'},
+    {id:105,data:'2026-05-24',desc:'Dona Aguas Claras 2',val:45.57,cat:'supermercado',cart:'BRB Black'},
     {id:106,data:'2026-05-24',desc:'Pd Paes E Delicias Com',val:6.95,cat:'alimentacao',cart:'BRB Black'},
-    {id:107,data:'2026-05-24',desc:'Atacadao Dia A Dia',val:160.28,cat:'mercado',cart:'BRB Black'},
-    {id:108,data:'2026-05-23',desc:'Easymarket',val:11.53,cat:'mercado',cart:'BRB Black'},
+    {id:107,data:'2026-05-24',desc:'Atacadao Dia A Dia',val:160.28,cat:'supermercado',cart:'BRB Black'},
+    {id:108,data:'2026-05-23',desc:'Easymarket',val:11.53,cat:'supermercado',cart:'BRB Black'},
     {id:109,data:'2026-05-23',desc:'Line Bakery',val:43.0,cat:'alimentacao',cart:'BRB Black'},
-    {id:110,data:'2026-05-23',desc:'Allpark Empreendimento',val:9.0,cat:'transporte',cart:'BRB Black'},
-    {id:111,data:'2026-05-23',desc:'Hora De Ler',val:25.0,cat:'julia',cart:'BRB Black'},
-    {id:112,data:'2026-05-23',desc:'Fonte De Vida Polpa De',val:43.2,cat:'mercado',cart:'BRB Black'},
+    {id:110,data:'2026-05-23',desc:'Allpark Empreendimento',val:9.0,cat:'estacionamento',cart:'BRB Black'},
+    {id:111,data:'2026-05-23',desc:'Hora De Ler',val:25.0,cat:'julia_outros',cart:'BRB Black'},
+    {id:112,data:'2026-05-23',desc:'Fonte De Vida Polpa De',val:43.2,cat:'supermercado',cart:'BRB Black'},
     {id:113,data:'2026-05-23',desc:'Dunkin Donuts',val:28.8,cat:'alimentacao',cart:'BRB Black'},
-    {id:114,data:'2026-05-23',desc:'Posto San Remo',val:10.0,cat:'transporte',cart:'BRB Black'},
+    {id:114,data:'2026-05-23',desc:'Posto San Remo',val:10.0,cat:'combustivel',cart:'BRB Black'},
     {id:115,data:'2026-05-23',desc:'Line Bakery',val:27.0,cat:'alimentacao',cart:'BRB Black'},
     {id:116,data:'2026-05-22',desc:'Zig*mane Mercado Bsb',val:19.9,cat:'alimentacao',cart:'BRB Black'},
-    {id:117,data:'2026-05-22',desc:'Allpark Empreendimento',val:12.0,cat:'transporte',cart:'BRB Black'},
+    {id:117,data:'2026-05-22',desc:'Allpark Empreendimento',val:12.0,cat:'estacionamento',cart:'BRB Black'},
     {id:118,data:'2026-05-22',desc:'Zig*mane Mercado Bsb',val:98.02,cat:'alimentacao',cart:'BRB Black'},
     {id:119,data:'2026-05-21',desc:'Dunkin Donuts',val:19.2,cat:'alimentacao',cart:'BRB Black'},
-    {id:120,data:'2026-05-21',desc:'Drogaria Rosario',val:38.32,cat:'saude',cart:'BRB Black'},
-    {id:121,data:'2026-05-20',desc:'L2 Estacionamento',val:10.0,cat:'transporte',cart:'BRB Black'},
-    {id:122,data:'2026-05-20',desc:'Adriana Dos Santos Le',val:6.0,cat:'alimentacao',cart:'BRB Black'},
+    {id:120,data:'2026-05-21',desc:'Drogaria Rosario',val:38.32,cat:'farmacia',cart:'BRB Black'},
+    {id:121,data:'2026-05-20',desc:'L2 Estacionamento',val:10.0,cat:'estacionamento',cart:'BRB Black'},
+    {id:122,data:'2026-05-20',desc:'Adriana Dos Santos Le',val:6.0,cat:'alim_trabalho',cart:'BRB Black'},
     {id:123,data:'2026-05-18',desc:'Sorvetes Maranatha',val:18.16,cat:'alimentacao',cart:'BRB Black'},
-    {id:124,data:'2026-05-18',desc:'Brb Mobilida*bus 1003',val:5.5,cat:'transporte',cart:'BRB Black'},
-    {id:125,data:'2026-05-18',desc:'Brb Mobilida*bus 1600',val:5.5,cat:'transporte',cart:'BRB Black'},
-    {id:126,data:'2026-05-18',desc:'Drogasil 1387',val:41.28,cat:'saude',cart:'BRB Black'},
-    {id:127,data:'2026-05-17',desc:'Mp *Paraibinhas',val:26.0,cat:'alimentacao',cart:'BRB Black'},
-    {id:128,data:'2026-05-17',desc:'Mp *Mpmarceloroch',val:9.0,cat:'alimentacao',cart:'BRB Black'},
-    {id:129,data:'2026-05-16',desc:'Easymarket',val:11.53,cat:'mercado',cart:'BRB Black'},
-    {id:130,data:'2026-05-16',desc:'Big Box Supermercados',val:22.01,cat:'mercado',cart:'BRB Black'},
-    {id:131,data:'2026-05-16',desc:'Armazemdabebida',val:55.28,cat:'alimentacao',cart:'BRB Black'},
+    {id:124,data:'2026-05-18',desc:'Brb Mobilida*bus 1003',val:5.5,cat:'metro',cart:'BRB Black'},
+    {id:125,data:'2026-05-18',desc:'Brb Mobilida*bus 1600',val:5.5,cat:'metro',cart:'BRB Black'},
+    {id:126,data:'2026-05-18',desc:'Drogasil 1387',val:41.28,cat:'farmacia',cart:'BRB Black'},
+    {id:127,data:'2026-05-17',desc:'Mp *Paraibinhas',val:26.0,cat:'alim_trabalho',cart:'BRB Black'},
+    {id:128,data:'2026-05-17',desc:'Mp *Mpmarceloroch',val:9.0,cat:'alim_trabalho',cart:'BRB Black'},
+    {id:129,data:'2026-05-16',desc:'Easymarket',val:11.53,cat:'supermercado',cart:'BRB Black'},
+    {id:130,data:'2026-05-16',desc:'Big Box Supermercados',val:22.01,cat:'supermercado',cart:'BRB Black'},
+    {id:131,data:'2026-05-16',desc:'Armazemdabebida',val:55.28,cat:'diversao',cart:'BRB Black'},
     {id:132,data:'2026-05-16',desc:'Line Bakery',val:18.0,cat:'alimentacao',cart:'BRB Black'},
     {id:133,data:'2026-05-15',desc:'Feijuca No Balde',val:53.35,cat:'alimentacao',cart:'BRB Black'},
-    {id:134,data:'2026-05-15',desc:'Washboxaguas',val:89.9,cat:'transporte',cart:'BRB Black'},
-    {id:135,data:'2026-05-14',desc:'Auto Posto Eptg',val:287.23,cat:'transporte',cart:'BRB Black'},
-    {id:136,data:'2026-05-14',desc:'Rei Do Mate',val:41.9,cat:'alimentacao',cart:'BRB Black'},
-    {id:137,data:'2026-05-14',desc:'Ifd*drogaria Rosario S',val:157.88,cat:'saude',cart:'BRB Black'},
-    {id:138,data:'2026-05-13',desc:'Estac Shopping',val:28.0,cat:'transporte',cart:'BRB Black'},
-    {id:139,data:'2026-05-13',desc:'Kimmiso',val:21.98,cat:'moradia',cart:'BRB Black'},
-    {id:140,data:'2026-05-13',desc:'American Cookies Parks',val:43.0,cat:'alimentacao',cart:'BRB Black'},
-    {id:141,data:'2026-05-12',desc:'Le Quartier',val:11.25,cat:'transporte',cart:'BRB Black'},
-    {id:142,data:'2026-05-12',desc:'Iof Transacoes Exterior R$',val:3.85,cat:'outro',cart:'BRB Black'},
-    {id:143,data:'2026-05-12',desc:'Claude.ai Subscription',val:110.0,cat:'assinatura',cart:'BRB Black'},
-    {id:144,data:'2026-05-11',desc:'Posto208sul',val:100.0,cat:'transporte',cart:'BRB Black'},
+    {id:134,data:'2026-05-15',desc:'Washboxaguas',val:89.9,cat:'limpeza_carro',cart:'BRB Black'},
+    {id:135,data:'2026-05-14',desc:'Auto Posto Eptg',val:287.23,cat:'combustivel',cart:'BRB Black'},
+    {id:136,data:'2026-05-14',desc:'Rei Do Mate',val:41.9,cat:'alim_trabalho',cart:'BRB Black'},
+    {id:137,data:'2026-05-14',desc:'Ifd*drogaria Rosario S',val:157.88,cat:'remedios',cart:'BRB Black'},
+    {id:138,data:'2026-05-13',desc:'Estac Shopping',val:28.0,cat:'estacionamento',cart:'BRB Black'},
+    {id:139,data:'2026-05-13',desc:'Kimmiso',val:21.98,cat:'itens_casa',cart:'BRB Black'},
+    {id:140,data:'2026-05-13',desc:'American Cookies Parks',val:43.0,cat:'diversao',cart:'BRB Black'},
+    {id:141,data:'2026-05-12',desc:'Le Quartier',val:11.25,cat:'alim_trabalho',cart:'BRB Black'},
+    {id:142,data:'2026-05-12',desc:'Iof Transacoes Exterior R$',val:3.85,cat:'outros',cart:'BRB Black'},
+    {id:143,data:'2026-05-12',desc:'Claude.ai Subscription',val:110.0,cat:'outros',cart:'BRB Black'},
+    {id:144,data:'2026-05-11',desc:'Posto208sul',val:100.0,cat:'combustivel',cart:'BRB Black'},
     {id:145,data:'2026-05-10',desc:'Line Bakery',val:18.0,cat:'alimentacao',cart:'BRB Black'},
     {id:146,data:'2026-05-10',desc:'Bolos Do Flavio Posto',val:26.0,cat:'alimentacao',cart:'BRB Black'},
-    {id:147,data:'2026-05-09',desc:'Easymarket',val:5.98,cat:'mercado',cart:'BRB Black'},
-    {id:148,data:'2026-05-09',desc:'Allpark Empreendimento',val:9.0,cat:'transporte',cart:'BRB Black'},
+    {id:147,data:'2026-05-09',desc:'Easymarket',val:5.98,cat:'supermercado',cart:'BRB Black'},
+    {id:148,data:'2026-05-09',desc:'Allpark Empreendimento',val:9.0,cat:'estacionamento',cart:'BRB Black'},
     {id:149,data:'2026-05-09',desc:'Cacau Show',val:24.95,cat:'alimentacao',cart:'BRB Black'},
-    {id:150,data:'2026-05-08',desc:'Lisdamas',val:167.45,cat:'outro',cart:'BRB Black'},
-    {id:151,data:'2026-05-08',desc:'One Park',val:31.15,cat:'transporte',cart:'BRB Black'},
-    {id:152,data:'2026-05-08',desc:'Medceu Servicos',val:40.0,cat:'transporte',cart:'BRB Black'},
-    {id:153,data:'2026-05-08',desc:'Ifd*gabriel Lopes Amar',val:27.98,cat:'alimentacao',cart:'BRB Black'}
+    {id:150,data:'2026-05-08',desc:'Lisdamas',val:167.45,cat:'roupas_nataly',cart:'BRB Black'},
+    {id:151,data:'2026-05-08',desc:'One Park',val:31.15,cat:'estacionamento',cart:'BRB Black'},
+    {id:152,data:'2026-05-08',desc:'Medceu Servicos',val:40.0,cat:'farmacia',cart:'BRB Black'},
+    {id:153,data:'2026-05-08',desc:'Ifd*gabriel Lopes Amar',val:27.98,cat:'alim_trabalho',cart:'BRB Black'}
   ]),
   fixosCart: ld('fixosCart', [
     {id:1,desc:'Seguro Auto',val:229.43,cat:'seguros',variavel:false,meio:'Cartão de crédito'},
@@ -1981,7 +1981,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, set, onValue, get } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
 (function(){
-  const FB_VERSION = '2026-07-v8';
+  const FB_VERSION = '2026-07-v9';
   const fbConfig = {
     apiKey: "AIzaSyCPvz65aVIn9lxIALc4BcOY20PevqXStVA",
     authDomain: "app-financeiro-6fad9.firebaseapp.com",
