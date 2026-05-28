@@ -1643,6 +1643,156 @@ function navTo(v){
 }
 function fecharCatDet(){document.getElementById('cat-detalhe').style.display='none';}
 
+// ── MODALS ───────────────────────────────────────────────────────────────────
+let fixoMeio='cartao';
+function openM(id,sub){
+  const today=new Date().toISOString().split('T')[0];
+  if(id==='gasto'){
+    document.getElementById('g-data').value=today;
+    document.getElementById('g-is-parc').checked=false;
+    document.getElementById('g-parc-campos').style.display='none';
+    document.getElementById('g-parc-calc').textContent='—';
+  }
+  if(id==='fixo-add'){
+    fixoMeio=sub||'cartao';
+    document.getElementById('fixo-add-sub').textContent=sub==='cartao'?'Gasto fixo no cartão':'Gasto fixo em conta';
+    document.getElementById('fixo-meio-hidden').value=fixoMeio;
+  }
+  if(id==='terc-gasto') document.getElementById('tg-data').value=today;
+  document.getElementById('m-'+id).classList.add('on');
+}
+function closeM(id){document.getElementById('m-'+id).classList.remove('on');}
+document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('on');}));
+
+function toggleParcCampos(){
+  document.getElementById('g-parc-campos').style.display=
+    document.getElementById('g-is-parc').checked?'block':'none';
+}
+function calcParcGasto(){
+  const n=parseInt(document.getElementById('g-parc-n').value)||0;
+  const t=parseFloat(document.getElementById('g-parc-tot').value)||0;
+  document.getElementById('g-parc-calc').textContent=n&&t?fmt(t/n):'—';
+}
+function calcPa(){
+  const n=parseInt(document.getElementById('pa-n').value)||0;
+  const t=parseFloat(document.getElementById('pa-tot').value)||0;
+  document.getElementById('pa-calc').textContent=n&&t?fmt(t/n):'—';
+}
+
+function saveGasto(){
+  const desc=document.getElementById('g-desc').value.trim();
+  const val=parseFloat(document.getElementById('g-val').value)||0;
+  if(!desc||!val)return;
+  const data=document.getElementById('g-data').value;
+  const cart=document.getElementById('g-cart').value||'';
+  const cat=document.getElementById('g-cat').value;
+  S.gastos.push({id:nid(),desc,val,cat,data,cart});
+  if(document.getElementById('g-is-parc').checked){
+    const n=parseInt(document.getElementById('g-parc-n').value)||1;
+    const tot=parseFloat(document.getElementById('g-parc-tot').value)||val;
+    const mesI=parseInt(data.split('-')[1]);
+    S.parcs.push({id:nid(),desc,cart:document.getElementById('g-parc-cart').value,
+      valParc:tot/n,qtdTotal:n,qtdRestante:n,mesInicio:mesI});
+  }
+  persist();closeM('gasto');toast();rDash();rGastos();
+  ['g-desc','g-val','g-parc-n','g-parc-tot'].forEach(id=>document.getElementById(id).value='');
+  const gc=document.getElementById('g-cart'); if(gc) gc.value='';
+}
+
+function saveCk(){
+  const desc=document.getElementById('ck-desc').value.trim();
+  if(!desc)return;
+  S.cks.push({id:nid(),desc,
+    venc:parseInt(document.getElementById('ck-venc').value)||1,
+    val:parseFloat(document.getElementById('ck-val-inp').value)||0,
+    comp:document.getElementById('ck-comp').value,ok:false});
+  persist();closeM('ck-add');toast();rCk();
+  ['ck-desc','ck-venc','ck-val-inp'].forEach(id=>document.getElementById(id).value='');
+}
+
+function saveFixo(){
+  const desc=document.getElementById('fixo-desc').value.trim();
+  if(!desc)return;
+  const meio=document.getElementById('fixo-meio-hidden').value||fixoMeio;
+  const item={id:nid(),desc,
+    val:parseFloat(document.getElementById('fixo-val').value)||0,
+    cat:document.getElementById('fixo-cat').value,
+    variavel:document.getElementById('fixo-tipo').value==='true',
+    meio:meio==='cartao'?'Cartão de crédito':'Débito em conta'};
+  if(meio==='cartao') S.fixosCart.push(item);
+  else S.fixosConta.push(item);
+  persist();closeM('fixo-add');toast();rFixos();
+  ['fixo-desc','fixo-val'].forEach(id=>document.getElementById(id).value='');
+}
+
+function saveEmp(){
+  const nome=document.getElementById('emp-nome').value.trim();
+  if(!nome)return;
+  S.emprestimos.push({id:nid(),nome,
+    parcela:parseFloat(document.getElementById('emp-parc').value)||0,
+    finalidade:document.getElementById('emp-fin').value,
+    tipo:'Fixo',
+    parcAtual:parseInt(document.getElementById('emp-atual').value)||1,
+    parcTotal:parseInt(document.getElementById('emp-total-inp').value)||1,
+    consignado:document.getElementById('emp-consig').checked});
+  persist();closeM('emp-add');toast();rEmp();
+  ['emp-nome','emp-parc','emp-fin','emp-atual','emp-total-inp'].forEach(id=>document.getElementById(id).value='');
+}
+
+function saveParc(){
+  const desc=document.getElementById('pa-desc').value.trim();
+  if(!desc)return;
+  const n=parseInt(document.getElementById('pa-n').value)||1;
+  const tot=parseFloat(document.getElementById('pa-tot').value)||0;
+  const mesI=parseInt(document.getElementById('pa-mes').value);
+  S.parcs.push({id:nid(),desc,
+    cart:document.getElementById('pa-cart').value,
+    valParc:tot/n,qtdTotal:n,qtdRestante:n,mesInicio:mesI});
+  persist();closeM('parc-add');toast();rParc();
+  ['pa-desc','pa-tot','pa-n'].forEach(id=>document.getElementById(id).value='');
+}
+
+function saveTercGasto(){
+  const desc=document.getElementById('tg-desc').value.trim();
+  const val=parseFloat(document.getElementById('tg-val').value)||0;
+  if(!desc||!val)return;
+  S.tercGastos.push({id:nid(),
+    pessoa:document.getElementById('tg-pessoa').value,
+    desc,val,
+    data:document.getElementById('tg-data').value,
+    cart:document.getElementById('tg-cart').value,
+    status:document.getElementById('tg-status').value});
+  persist();closeM('terc-gasto');toast();rTerc();
+  ['tg-desc','tg-val'].forEach(id=>document.getElementById(id).value='');
+}
+
+function saveTercParc(){
+  const desc=document.getElementById('tp-desc').value.trim();
+  if(!desc)return;
+  S.tercParcs.push({id:nid(),
+    devedor:document.getElementById('tp-pessoa').value,
+    desc,
+    cart:document.getElementById('tp-cart').value,
+    valParc:parseFloat(document.getElementById('tp-val').value)||0,
+    qtdRestante:parseInt(document.getElementById('tp-qtd').value)||1,
+    mesInicio:parseInt(document.getElementById('tp-mes').value)});
+  persist();closeM('terc-parc');toast();rTerc();
+  ['tp-desc','tp-val','tp-qtd'].forEach(id=>document.getElementById(id).value='');
+}
+
+// ── MOBILE ────────────────────────────────────────────────────────────────────
+function toggleSB(){
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('overlay-bg').classList.toggle('on');
+}
+function closeSB(){
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay-bg').classList.remove('on');
+}
+document.querySelectorAll('.ni').forEach(n=>n.addEventListener('click',()=>{
+  if(window.innerWidth<=768)closeSB();
+}));
+
 // ── INIT ──────────────────────────────────────────────────────────────────────
 CM=6; CY=2026;
 document.getElementById('mlabel').textContent='JUL 2026';
