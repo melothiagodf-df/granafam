@@ -729,6 +729,18 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
         <option value="10">Outubro 2026</option>
         <option value="11">Novembro 2026</option>
         <option value="12">Dezembro 2026</option>
+        <option value="13">Janeiro 2027</option>
+        <option value="14">Fevereiro 2027</option>
+        <option value="15">Março 2027</option>
+        <option value="16">Abril 2027</option>
+        <option value="17">Maio 2027</option>
+        <option value="18">Junho 2027</option>
+        <option value="19">Julho 2027</option>
+        <option value="20">Agosto 2027</option>
+        <option value="21">Setembro 2027</option>
+        <option value="22">Outubro 2027</option>
+        <option value="23">Novembro 2027</option>
+        <option value="24">Dezembro 2027</option>
       </select>
     </div>
     <div class="mfoot">
@@ -739,7 +751,7 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
 </div>
 
 <script>
-const DATA_VERSION = '2026-07-v16';
+const DATA_VERSION = '2026-07-v17';
 
 
 const MNS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
@@ -791,6 +803,12 @@ const CICLOS = {
   10:{ini:'2026-08-08',fim:'2026-09-08', salThiago:'2026-09-20', salNataly:'2026-10-01'},
   11:{ini:'2026-09-09',fim:'2026-10-07', salThiago:'2026-10-20', salNataly:'2026-11-01'},
   12:{ini:'2026-10-08',fim:'2026-11-09', salThiago:'2026-11-20', salNataly:'2026-12-01'},
+  13:{ini:'2026-11-10',fim:'2026-12-09', salThiago:'2026-12-20', salNataly:'2027-01-01'},
+  14:{ini:'2026-12-10',fim:'2027-01-09', salThiago:'2027-01-20', salNataly:'2027-02-01'},
+  15:{ini:'2027-01-10',fim:'2027-02-07', salThiago:'2027-02-20', salNataly:'2027-03-01'},
+  16:{ini:'2027-02-08',fim:'2027-03-09', salThiago:'2027-03-20', salNataly:'2027-04-01'},
+  17:{ini:'2027-03-10',fim:'2027-04-07', salThiago:'2027-04-20', salNataly:'2027-05-01'},
+  18:{ini:'2027-04-08',fim:'2027-05-09', salThiago:'2027-05-20', salNataly:'2027-06-01'},
 };
 function getCiclo(m1){return CICLOS[m1]||CICLOS[7];}
 function getSemanas(m1){
@@ -1483,8 +1501,8 @@ function delEmp(id){S.emprestimos=S.emprestimos.filter(e=>e.id!==id);persist();r
 function rParc(){
   const m1=CM+1;
   document.getElementById('parc-mes-lbl').textContent=MNS[CM]+' '+CY;
-  const meses=[7,8,9,10,11,12];
-  const mlbls=['Jul/26','Ago/26','Set/26','Out/26','Nov/26','Dez/26'];
+  const meses=[7,8,9,10,11,12,13,14,15,16,17,18];
+  const mlbls=['Jul/26','Ago/26','Set/26','Out/26','Nov/26','Dez/26','Jan/27','Fev/27','Mar/27','Abr/27','Mai/27','Jun/27'];
   const parcsBase=parcF==='all'?S.parcs:S.parcs.filter(p=>p.cart===parcF);
   document.getElementById('parc-meses').innerHTML=meses.map((m,i)=>{
     const tot=parcsBase.reduce((a,p)=>{
@@ -1503,7 +1521,7 @@ function rParc(){
     const parcAtual=ativa?m1-p.mesInicio+1:0;
     const falta=p.valParc*(p.qtdRestante||0);
     const ulm=p.mesInicio+p.qtdTotal-1;
-    const ulStr=ulm<=12?MSH[ulm-1]+'/26':MSH[(ulm-1)%12]+'/2'+(26+Math.floor((ulm-1)/12));
+    const ulStr=ulm<=12?MSH[ulm-1]+'/26':MSH[(ulm-1)%12]+'/'+String(2026+Math.floor((ulm-1)/12)).slice(2);
     return `<tr style="${ativa?'':'opacity:.4'}">
       <td style="font-weight:500">${p.desc}</td>
       <td style="font-size:11px;color:var(--muted)">${p.cart}</td>
@@ -1615,8 +1633,8 @@ function abrirCat(cat,pref){
 
 // ── ACOMP GERAL ──────────────────────────────────────────────────────────────
 function rAg(){
-  const meses=[7,8,9,10,11,12];
-  const mlbls=['Jul/26','Ago/26','Set/26','Out/26','Nov/26','Dez/26'];
+  const meses=[7,8,9,10,11,12,13,14,15,16,17,18];
+  const mlbls=['Jul/26','Ago/26','Set/26','Out/26','Nov/26','Dez/26','Jan/27','Fev/27','Mar/27','Abr/27','Mai/27','Jun/27'];
   const rendaBase=S.renda.t+S.renda.n+(S.renda.e||0);
   const tFixCart=S.fixosCart.filter(f=>!f.descontadoFolha).reduce((a,f)=>a+(f.val||0),0);
   const tFixConta=S.fixosConta.filter(f=>!f.descontadoFolha).reduce((a,f)=>a+(f.val||0),0);
@@ -1981,7 +1999,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, set, onValue, get } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
 (function(){
-  const FB_VERSION = '2026-07-v9';
+  const FB_VERSION = '2026-07-v10';
   const fbConfig = {
     apiKey: "AIzaSyCPvz65aVIn9lxIALc4BcOY20PevqXStVA",
     authDomain: "app-financeiro-6fad9.firebaseapp.com",
