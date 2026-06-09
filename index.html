@@ -484,6 +484,29 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
         <div class="sh"><span class="sh-t">Categorias Padrão</span></div>
         <div id="cats-default-list"></div>
       </div>
+
+      <!-- CARTÕES -->
+      <div class="card" style="margin-top:16px">
+        <div class="sh"><span class="sh-t">Novo Cartão</span></div>
+        <div style="display:flex;gap:10px;align-items:flex-end">
+          <div class="fg" style="flex:1"><label class="flbl">Nome do cartão</label><input class="fi-inp" type="text" id="nc-cart-nome" placeholder="ex: C6 Bank"></div>
+          <div class="fg"><label class="flbl">&nbsp;</label><button class="btn btn-p" onclick="salvarNovoCartao()">Adicionar</button></div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <div class="sh"><span class="sh-t">Cartões Personalizados</span></div>
+        <div id="carts-custom-list"><div class="empty"><div class="eico">💳</div>Nenhum cartão personalizado ainda.</div></div>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <div class="sh"><span class="sh-t">Cartões Padrão</span></div>
+        <div id="carts-default-list"></div>
+      </div>
+
+      <!-- CICLOS -->
+      <div class="card" style="margin-top:16px">
+        <div class="sh"><span class="sh-t">Editor de Ciclos BRB Black</span></div>
+        <div id="ciclos-editor-list"></div>
+      </div>
     </div>
 
     <!-- ACOMP GERAL -->
@@ -549,18 +572,7 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
       </select>
     </div>
     <div class="fg"><label class="flbl">Cartão / Conta</label>
-      <select class="fsel" id="g-cart">
-        <option value="">— Não informado —</option>
-        <option>BRB Black</option>
-        <option>BRB Visa</option>
-        <option>Itaú Azul</option>
-        <option>Nubank</option>
-        <option>Inter</option>
-        <option>Mercado Pago</option>
-        <option>Renner</option>
-        <option>Débito direto</option>
-        <option>Dinheiro</option>
-      </select>
+      <select class="fsel" id="g-cart"></select>
     </div>
     <div style="border-top:1px solid var(--border);padding-top:12px;margin-top:4px">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
@@ -572,7 +584,7 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
           <div class="fg"><label class="flbl">Nº de parcelas</label><input class="fi-inp" type="number" id="g-parc-n" min="2" placeholder="12"></div>
           <div class="fg"><label class="flbl">Valor total (R$)</label><input class="fi-inp" type="number" id="g-parc-tot" step="0.01" oninput="calcParcGasto()"></div>
         </div>
-        <div class="fg"><label class="flbl">Cartão</label><select class="fsel" id="g-parc-cart"><option>BRB Black</option><option>Nubank</option><option>Inter</option><option>Mercado Pago</option><option>Itaú Azul</option><option>Renner</option></select></div>
+        <div class="fg"><label class="flbl">Cartão</label><select class="fsel" id="g-parc-cart"></select></div>
         <div class="c-lbl">Valor por parcela</div>
         <div style="font-family:'DM Mono',monospace;font-size:14px;padding:4px 0" id="g-parc-calc">—</div>
       </div>
@@ -633,7 +645,7 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
     <div class="m-title">Nova Parcela</div><div class="m-sub">Registrar compra parcelada</div>
     <div class="fg"><label class="flbl">Descrição</label><input class="fi-inp" type="text" id="pa-desc" placeholder="Ex: Sofá, Notebook..."></div>
     <div class="frow">
-      <div class="fg"><label class="flbl">Cartão</label><select class="fsel" id="pa-cart"><option>BRB Black</option><option>Nubank</option><option>Inter</option><option>Mercado Pago</option><option>Itaú Azul</option><option>Renner</option></select></div>
+      <div class="fg"><label class="flbl">Cartão</label><select class="fsel" id="pa-cart"></select></div>
       <div class="fg"><label class="flbl">Valor total (R$)</label><input class="fi-inp" type="number" id="pa-tot" step="0.01" oninput="calcPa()"></div>
     </div>
     <div class="frow">
@@ -655,7 +667,7 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
       <div class="fg"><label class="flbl">Data</label><input class="fi-inp" type="date" id="tg-data"></div>
     </div>
     <div class="frow">
-      <div class="fg"><label class="flbl">Cartão usado</label><select class="fsel" id="tg-cart"><option>BRB Black</option><option>Nubank</option><option>Inter</option><option>Mercado Pago</option><option>Itaú Azul</option></select></div>
+      <div class="fg"><label class="flbl">Cartão usado</label><select class="fsel" id="tg-cart"></select></div>
       <div class="fg"><label class="flbl">Status</label><select class="fsel" id="tg-status"><option value="pendente">Pendente (a receber)</option><option value="recebido">Recebido</option></select></div>
     </div>
     <div class="mfoot"><button class="btn btn-s" onclick="closeM('terc-gasto')">Cancelar</button><button class="btn btn-p" onclick="saveTercGasto()">Salvar</button></div>
@@ -668,7 +680,7 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
     <div class="fg"><label class="flbl">Pessoa</label><select class="fsel" id="tp-pessoa"><option>Maria</option><option>Mãe</option><option>Outro</option></select></div>
     <div class="fg"><label class="flbl">Descrição</label><input class="fi-inp" type="text" id="tp-desc" placeholder="Ex: Geladeira, Notebook..."></div>
     <div class="frow">
-      <div class="fg"><label class="flbl">Cartão</label><select class="fsel" id="tp-cart"><option>BRB Black</option><option>Nubank</option><option>Inter</option><option>Mercado Pago</option></select></div>
+      <div class="fg"><label class="flbl">Cartão</label><select class="fsel" id="tp-cart"></select></div>
       <div class="fg"><label class="flbl">Valor por parcela (R$)</label><input class="fi-inp" type="number" id="tp-val" step="0.01"></div>
     </div>
     <div class="frow">
@@ -733,7 +745,7 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
 </div>
 
 <script>
-const DATA_VERSION = '2026-07-v19';
+const DATA_VERSION = '2026-07-v20';
 
 
 const MNS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
@@ -763,6 +775,102 @@ const ICOS = {
   outros:'📦',moradia:'🏠',assinatura:'📱',
   lazer:'🎭',educacao:'📚',receita:'💰'
 };
+// ── CARTÕES DINÂMICOS ────────────────────────────────────────────────────────
+const CARTS_DEFAULT = ['BRB Black','BRB Visa','Itaú Azul','Nubank','Inter','Mercado Pago','Renner','Débito direto','Dinheiro'];
+let CARTS_CUSTOM = [];
+
+function getAllCarts() { return [...CARTS_DEFAULT, ...CARTS_CUSTOM]; }
+
+function buildCartSelect(selId, selectedVal) {
+  const sel = document.getElementById(selId);
+  if (!sel) return;
+  const val = selectedVal || sel.value || 'BRB Black';
+  sel.innerHTML = getAllCarts().map(c =>
+    `<option value="${c}"${c===val?' selected':''}>${c}</option>`
+  ).join('');
+}
+
+function buildAllCartSelects() {
+  ['g-cart','g-parc-cart','pa-cart','tg-cart','tp-cart'].forEach(id => buildCartSelect(id));
+  // Filtros da visão por cartão
+  const cf = document.getElementById('cartao-select');
+  if(cf) {
+    const cur = cartaoAtual || 'BRB Black';
+    cf.innerHTML = getAllCarts().filter(c=>c!=='Débito direto'&&c!=='Dinheiro').map(c=>
+      `<div class="ftag ${c===cur?'on':''}" onclick="setCartaoV(this,'${c}')">${c}</div>`
+    ).join('');
+  }
+}
+
+function salvarNovoCartao() {
+  const nome = document.getElementById('nc-cart-nome').value.trim();
+  if (!nome) { toast('Informe o nome do cartão'); return; }
+  if (getAllCarts().includes(nome)) { toast('Esse cartão já existe'); return; }
+  CARTS_CUSTOM.push(nome);
+  salvarCartsFirebase();
+  document.getElementById('nc-cart-nome').value = '';
+  buildAllCartSelects();
+  rCfgCats();
+  toast('Cartão adicionado!');
+}
+
+function excluirCartao(idx) {
+  CARTS_CUSTOM.splice(idx, 1);
+  salvarCartsFirebase();
+  buildAllCartSelects();
+  rCfgCats();
+  toast('Cartão excluído');
+}
+
+async function salvarCartsFirebase() {
+  try { await fbSet(ref(fbDB,'granafam/carts_custom'), CARTS_CUSTOM); }
+  catch(e) { console.error('Erro ao salvar cartões:', e); }
+}
+
+async function carregarCartsFirebase() {
+  try {
+    const snap = await fbGet(ref(fbDB,'granafam/carts_custom'));
+    CARTS_CUSTOM = snap.val() || [];
+  } catch(e) { CARTS_CUSTOM = []; }
+  buildAllCartSelects();
+}
+
+// ── CICLOS EDITÁVEIS ──────────────────────────────────────────────────────────
+let CICLOS_CUSTOM = {}; // sobrescreve entradas de CICLOS quando definido
+
+function getCicloEfetivo(m1) {
+  if(CICLOS_CUSTOM[m1]) return CICLOS_CUSTOM[m1];
+  return CICLOS[m1] || null;
+}
+
+function salvarCicloCustom(m1, ini, fim) {
+  if(!ini||!fim) return;
+  const cicloBase = CICLOS[m1] || {};
+  CICLOS_CUSTOM[m1] = { ...cicloBase, ini, fim };
+  salvarCiclosFirebase();
+  buildCatFilters();
+  toast('Ciclo atualizado!');
+}
+
+function resetCiclo(m1) {
+  delete CICLOS_CUSTOM[m1];
+  salvarCiclosFirebase();
+  rCfgCats();
+  toast('Ciclo restaurado ao padrão');
+}
+
+async function salvarCiclosFirebase() {
+  try { await fbSet(ref(fbDB,'granafam/ciclos_custom'), CICLOS_CUSTOM); }
+  catch(e) { console.error('Erro ao salvar ciclos:', e); }
+}
+
+async function carregarCiclosFirebase() {
+  try {
+    const snap = await fbGet(ref(fbDB,'granafam/ciclos_custom'));
+    CICLOS_CUSTOM = snap.val() || {};
+  } catch(e) { CICLOS_CUSTOM = {}; }
+}
+
 // ── CATEGORIAS DINÂMICAS ─────────────────────────────────────────────────────
 const CATS_DEFAULT = [
   {key:'supermercado',nome:'Supermercado',ico:'🛒'},
@@ -827,25 +935,65 @@ function buildCatFilters() {
 }
 
 function rCfgCats() {
-  const all = getAllCats();
-  // Lista de padrão
+  // Categorias padrão
   const defEl = document.getElementById('cats-default-list');
   if (defEl) defEl.innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:8px;padding:8px 0">${
     CATS_DEFAULT.map(c=>`<span style="background:var(--s2);border:1px solid var(--border);border-radius:20px;padding:4px 12px;font-size:13px">${c.ico} ${c.nome}</span>`).join('')
   }</div>`;
-  // Lista de customizadas
+  // Categorias customizadas
   const custEl = document.getElementById('cats-custom-list');
   if (custEl) {
-    if (CATS_CUSTOM.length === 0) {
-      custEl.innerHTML = '<div class="empty"><div class="eico">⚙️</div>Nenhuma categoria personalizada ainda.</div>';
-    } else {
-      custEl.innerHTML = CATS_CUSTOM.map((c,i) =>
-        `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
-          <span>${c.ico} <strong>${c.nome}</strong> <span style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted);margin-left:6px">${c.key}</span></span>
-          <button onclick="excluirCategoria(${i})" style="background:none;border:1px solid var(--border);border-radius:4px;padding:3px 10px;font-size:11px;cursor:pointer;color:var(--red)">Excluir</button>
-        </div>`
-      ).join('');
-    }
+    custEl.innerHTML = CATS_CUSTOM.length === 0
+      ? '<div class="empty"><div class="eico">⚙️</div>Nenhuma categoria personalizada ainda.</div>'
+      : CATS_CUSTOM.map((c,i) =>
+          `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
+            <span>${c.ico} <strong>${c.nome}</strong> <span style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted);margin-left:6px">${c.key}</span></span>
+            <button onclick="excluirCategoria(${i})" style="background:none;border:1px solid var(--border);border-radius:4px;padding:3px 10px;font-size:11px;cursor:pointer;color:var(--red)">Excluir</button>
+          </div>`
+        ).join('');
+  }
+  // Cartões padrão
+  const cdEl = document.getElementById('carts-default-list');
+  if (cdEl) cdEl.innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:8px;padding:8px 0">${
+    CARTS_DEFAULT.map(c=>`<span style="background:var(--s2);border:1px solid var(--border);border-radius:20px;padding:4px 12px;font-size:13px">💳 ${c}</span>`).join('')
+  }</div>`;
+  // Cartões customizados
+  const ccEl = document.getElementById('carts-custom-list');
+  if (ccEl) {
+    ccEl.innerHTML = CARTS_CUSTOM.length === 0
+      ? '<div class="empty"><div class="eico">💳</div>Nenhum cartão personalizado ainda.</div>'
+      : CARTS_CUSTOM.map((c,i) =>
+          `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
+            <span>💳 <strong>${c}</strong></span>
+            <button onclick="excluirCartao(${i})" style="background:none;border:1px solid var(--border);border-radius:4px;padding:3px 10px;font-size:11px;cursor:pointer;color:var(--red)">Excluir</button>
+          </div>`
+        ).join('');
+  }
+  // Editor de ciclos
+  const ciclosEl = document.getElementById('ciclos-editor-list');
+  if (ciclosEl) {
+    const meses = ['','Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+    ciclosEl.innerHTML = Object.entries(CICLOS).map(([m1, c]) => {
+      const ef = getCiclo(parseInt(m1));
+      const custom = !!CICLOS_CUSTOM[m1];
+      const sems = getSemanas(parseInt(m1));
+      const semInfo = sems.length ? `Sem 1: ${fd(sems[0].ini)}→${fd(sems[0].fim)} · Sem 2: ${fd(sems[1].ini)}→${fd(sems[1].fim)} · Sem 3: ${fd(sems[2].ini)}→${fd(sems[2].fim)} · Sem 4: ${fd(sems[3].ini)}→${fd(sems[3].fim)}` : '';
+      const anoIni = ef.ini.split('-')[0]; const anoFim = ef.fim.split('-')[0];
+      return `<div style="padding:12px 0;border-bottom:1px solid var(--border)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <strong>Ciclo ${m1} ${custom?'<span style="font-size:10px;color:var(--accent);font-family:DM Mono,monospace">EDITADO</span>':''}</strong>
+          ${custom?`<button onclick="resetCiclo(${m1})" style="background:none;border:1px solid var(--border);border-radius:4px;padding:2px 8px;font-size:10px;cursor:pointer;color:var(--muted)">Restaurar padrão</button>`:''}
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:flex-end">
+          <div><label style="font-size:10px;color:var(--muted);font-family:DM Mono,monospace">Início</label>
+            <input type="date" id="cic-ini-${m1}" value="${ef.ini}" style="width:100%;padding:5px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;background:var(--s2)"></div>
+          <div><label style="font-size:10px;color:var(--muted);font-family:DM Mono,monospace">Fim</label>
+            <input type="date" id="cic-fim-${m1}" value="${ef.fim}" style="width:100%;padding:5px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;background:var(--s2)"></div>
+          <button onclick="salvarCicloCustom(${m1},document.getElementById('cic-ini-${m1}').value,document.getElementById('cic-fim-${m1}').value);rCfgCats()" style="background:var(--ink);color:#fff;border:none;border-radius:4px;padding:6px 12px;font-size:11px;cursor:pointer">Salvar</button>
+        </div>
+        <div style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted);margin-top:4px">${semInfo}</div>
+      </div>`;
+    }).join('');
   }
 }
 
@@ -883,11 +1031,18 @@ async function salvarCatsFirebase() {
 
 async function carregarCatsFirebase() {
   try {
-    const snap = await fbGet(ref(fbDB,'granafam/cats_custom'));
-    CATS_CUSTOM = snap.val() || [];
-  } catch(e) { CATS_CUSTOM = []; }
+    const [snapCats, snapCarts, snapCiclos] = await Promise.all([
+      fbGet(ref(fbDB,'granafam/cats_custom')),
+      fbGet(ref(fbDB,'granafam/carts_custom')),
+      fbGet(ref(fbDB,'granafam/ciclos_custom')),
+    ]);
+    CATS_CUSTOM  = snapCats.val()   || [];
+    CARTS_CUSTOM = snapCarts.val()  || [];
+    CICLOS_CUSTOM = snapCiclos.val() || {};
+  } catch(e) { CATS_CUSTOM=[]; CARTS_CUSTOM=[]; CICLOS_CUSTOM={}; }
   buildCatSelect('g-cat');
   buildCatFilters();
+  buildAllCartSelects();
 }
 
 const TITLES = {dash:'Visão Geral',gastos:'Gastos do Mês',ck:'Checklist de Pagamentos',sem:'Gastos Semanais',fixos:'Gastos Fixos',emp:'Empréstimos e Financiamentos',parc:'Parcelas',terc:'Gastos de Terceiros',cat:'Categorias',ag:'Acompanhamento Geral',cartao:'Visão por Cartão','cfg-cats':'Gerenciar Categorias'};
@@ -907,7 +1062,7 @@ function showSyncStatus(ok) {
 const CICLOS = {
   6:{ini:'2026-04-08',fim:'2026-05-07', salThiago:'2026-05-20', salNataly:'2026-06-01'},
   7:{ini:'2026-05-08',fim:'2026-06-09', salThiago:'2026-06-20', salNataly:'2026-07-01'},
-  8:{ini:'2026-06-10',fim:'2026-07-07', salThiago:'2026-07-20', salNataly:'2026-08-01'},
+  8:{ini:'2026-06-08',fim:'2026-07-07', salThiago:'2026-07-20', salNataly:'2026-08-01'},
   9:{ini:'2026-07-08',fim:'2026-08-07', salThiago:'2026-08-20', salNataly:'2026-09-01'},
   10:{ini:'2026-08-08',fim:'2026-09-08', salThiago:'2026-09-20', salNataly:'2026-10-01'},
   11:{ini:'2026-09-09',fim:'2026-10-07', salThiago:'2026-10-20', salNataly:'2026-11-01'},
@@ -919,18 +1074,18 @@ const CICLOS = {
   17:{ini:'2027-03-10',fim:'2027-04-07', salThiago:'2027-04-20', salNataly:'2027-05-01'},
   18:{ini:'2027-04-08',fim:'2027-05-09', salThiago:'2027-05-20', salNataly:'2027-06-01'},
 };
-function getCiclo(m1){return CICLOS[m1]||CICLOS[7];}
+function getCiclo(m1){return CICLOS_CUSTOM[m1]||CICLOS[m1]||CICLOS[7];}
 function getSemanas(m1){
   const c=getCiclo(m1);
+  if(!c) return [];
   const ini=new Date(c.ini+'T12:00:00');
   const fim=new Date(c.fim+'T12:00:00');
-  const dias=Math.round((fim-ini)/86400000);
-  const sd=Math.floor(dias/4);
+  // 3 semanas fixas de 7 dias, 4ª semana = restante
   return [0,1,2,3].map(i=>{
-    const s=new Date(ini);s.setDate(s.getDate()+i*sd);
-    const f=i===3?new Date(fim):new Date(ini);
-    if(i<3)f.setDate(f.getDate()+(i+1)*sd-1);
-    return {n:i+1,ini:s.toISOString().split('T')[0],fim:f.toISOString().split('T')[0]};
+    const s=new Date(ini); s.setDate(s.getDate()+i*7);
+    const f= i===3 ? new Date(fim) : new Date(ini);
+    if(i<3) f.setDate(f.getDate()+(i+1)*7-1);
+    return {n:i+1, ini:s.toISOString().split('T')[0], fim:f.toISOString().split('T')[0]};
   });
 }
 function fd(s){if(!s)return'';const[y,m,d]=s.split('-');return d+'/'+m;}
@@ -2113,7 +2268,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, set, onValue, get } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
 (function(){
-  const FB_VERSION = '2026-07-v12';
+  const FB_VERSION = '2026-07-v13';
   const fbConfig = {
     apiKey: "AIzaSyCPvz65aVIn9lxIALc4BcOY20PevqXStVA",
     authDomain: "app-financeiro-6fad9.firebaseapp.com",
