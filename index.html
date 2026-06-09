@@ -240,6 +240,8 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
     <div class="ns">Análise</div>
     <div class="ni" onclick="goTo(this,'cat')"><span class="ic">◎</span> Categorias</div>
     <div class="ni" onclick="goTo(this,'ag')"><span class="ic">▤</span> Acomp. Geral</div>
+    <div class="ns">Configurações</div>
+    <div class="ni" onclick="goTo(this,'cfg-cats')"><span class="ic">⚙️</span> Gerenciar Categorias</div>
   </nav>
   <div class="sb-foot">
     <button class="fab" onclick="openM('gasto')">＋ Novo Gasto</button>
@@ -303,23 +305,6 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
       <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
         <div class="filters" id="g-filters" style="margin-bottom:0;flex-wrap:wrap">
           <div class="ftag on" onclick="setGF(this,'all')">Todas</div>
-          <div class="ftag" onclick="setGF(this,'supermercado')">🛒 Mercado</div>
-          <div class="ftag" onclick="setGF(this,'alimentacao')">🍽️ Alimentação</div>
-          <div class="ftag" onclick="setGF(this,'alim_trabalho')">🥗 Trab.</div>
-          <div class="ftag" onclick="setGF(this,'combustivel')">⛽ Combustível</div>
-          <div class="ftag" onclick="setGF(this,'remedios')">💉 Remédios</div>
-          <div class="ftag" onclick="setGF(this,'diarista')">🧹 Diarista</div>
-          <div class="ftag" onclick="setGF(this,'farmacia')">💊 Farmácia</div>
-          <div class="ftag" onclick="setGF(this,'uber')">🚗 Uber</div>
-          <div class="ftag" onclick="setGF(this,'estacionamento')">🅿️ Estac.</div>
-          <div class="ftag" onclick="setGF(this,'diversao')">🎉 Diversão</div>
-          <div class="ftag" onclick="setGF(this,'presentes')">🎁 Presentes</div>
-          <div class="ftag" onclick="setGF(this,'viagem')">✈️ Viagem</div>
-          <div class="ftag" onclick="setGF(this,'cuidados')">💆 Pessoal</div>
-          <div class="ftag" onclick="setGF(this,'roupas_thiago')">👔 Thiago</div>
-          <div class="ftag" onclick="setGF(this,'roupas_nataly')">👗 Nataly</div>
-          <div class="ftag" onclick="setGF(this,'julia_roupas')">👚 Júlia</div>
-          <div class="ftag" onclick="setGF(this,'outros')">📦 Outros</div>
         </div>
         <div class="filters" id="g-cart-filters" style="margin-bottom:0">
           <div class="ftag on" onclick="setGFC(this,'all')">Todos os cartões</div>
@@ -480,6 +465,27 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
       </div>
     </div>
 
+    <!-- CONFIG CATEGORIAS -->
+    <div id="v-cfg-cats" class="view">
+      <div class="card" style="margin-bottom:16px">
+        <div class="sh"><span class="sh-t">Nova Categoria</span></div>
+        <div class="frow" style="grid-template-columns:1fr 1fr 1fr auto;gap:10px;align-items:flex-end">
+          <div class="fg"><label class="flbl">Chave (sem espaços)</label><input class="fi-inp" type="text" id="nc-key" placeholder="ex: academia"></div>
+          <div class="fg"><label class="flbl">Nome</label><input class="fi-inp" type="text" id="nc-nome" placeholder="ex: Academia"></div>
+          <div class="fg"><label class="flbl">Emoji</label><input class="fi-inp" type="text" id="nc-ico" placeholder="ex: 🏋️" maxlength="2"></div>
+          <div class="fg"><label class="flbl">&nbsp;</label><button class="btn btn-p" onclick="salvarNovaCategoria()">Adicionar</button></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="sh"><span class="sh-t">Categorias Personalizadas</span></div>
+        <div id="cats-custom-list"><div class="empty"><div class="eico">⚙️</div>Nenhuma categoria personalizada ainda.</div></div>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <div class="sh"><span class="sh-t">Categorias Padrão</span></div>
+        <div id="cats-default-list"></div>
+      </div>
+    </div>
+
     <!-- ACOMP GERAL -->
     <div id="v-ag" class="view">
       <div class="card" style="overflow-x:auto">
@@ -540,30 +546,6 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
     </div>
     <div class="fg"><label class="flbl">Categoria</label>
       <select class="fsel" id="g-cat">
-        <option value="supermercado">🛒 Supermercado</option>
-        <option value="alimentacao">🍽️ Alimentação</option>
-        <option value="alim_trabalho">🥗 Alimentação - Trabalho</option>
-        <option value="farmacia">💊 Farmácia - Diversos</option>
-        <option value="combustivel">⛽ Combustível</option>
-        <option value="remedios">💉 Remédios</option>
-        <option value="diarista">🧹 Diarista</option>
-        <option value="uber">🚗 Uber</option>
-        <option value="estacionamento">🅿️ Estacionamento</option>
-        <option value="limpeza_carro">🚿 Limpeza do Carro</option>
-        <option value="diversao">🎉 Diversão da Família</option>
-        <option value="itens_casa">🏠 Itens para Casa</option>
-        <option value="presentes">🎁 Presentes Diversos</option>
-        <option value="cuidados">💆 Cuidados Pessoais</option>
-        <option value="viagem">✈️ Gastos Viagem</option>
-        <option value="metro">🚇 Metrô</option>
-        <option value="roupas_thiago">👔 Roupas - Thiago</option>
-        <option value="roupas_nataly">👗 Roupas - Nataly</option>
-        <option value="julia_roupas">👚 Júlia - Roupas</option>
-        <option value="julia_brinquedos">🧸 Júlia - Brinquedos</option>
-        <option value="julia_remedios">💊 Júlia - Remédios</option>
-        <option value="julia_lazer">🎡 Júlia - Lazer</option>
-        <option value="julia_outros">🎀 Júlia - Outros</option>
-        <option value="outros">📦 Outros</option>
       </select>
     </div>
     <div class="fg"><label class="flbl">Cartão / Conta</label>
@@ -751,7 +733,7 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
 </div>
 
 <script>
-const DATA_VERSION = '2026-07-v17';
+const DATA_VERSION = '2026-07-v19';
 
 
 const MNS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
@@ -781,7 +763,134 @@ const ICOS = {
   outros:'📦',moradia:'🏠',assinatura:'📱',
   lazer:'🎭',educacao:'📚',receita:'💰'
 };
-const TITLES = {dash:'Visão Geral',gastos:'Gastos do Mês',ck:'Checklist de Pagamentos',sem:'Gastos Semanais',fixos:'Gastos Fixos',emp:'Empréstimos e Financiamentos',parc:'Parcelas',terc:'Gastos de Terceiros',cat:'Categorias',ag:'Acompanhamento Geral',cartao:'Visão por Cartão'};
+// ── CATEGORIAS DINÂMICAS ─────────────────────────────────────────────────────
+const CATS_DEFAULT = [
+  {key:'supermercado',nome:'Supermercado',ico:'🛒'},
+  {key:'alimentacao',nome:'Alimentação',ico:'🍽️'},
+  {key:'alim_trabalho',nome:'Alim. Trabalho',ico:'🥗'},
+  {key:'farmacia',nome:'Farmácia',ico:'💊'},
+  {key:'combustivel',nome:'Combustível',ico:'⛽'},
+  {key:'remedios',nome:'Remédios',ico:'💉'},
+  {key:'diarista',nome:'Diarista',ico:'🧹'},
+  {key:'uber',nome:'Uber',ico:'🚗'},
+  {key:'estacionamento',nome:'Estacionamento',ico:'🅿️'},
+  {key:'limpeza_carro',nome:'Limpeza Carro',ico:'🚿'},
+  {key:'diversao',nome:'Diversão',ico:'🎉'},
+  {key:'itens_casa',nome:'Itens Casa',ico:'🏠'},
+  {key:'presentes',nome:'Presentes',ico:'🎁'},
+  {key:'cuidados',nome:'Cuidados Pessoais',ico:'💆'},
+  {key:'viagem',nome:'Viagem',ico:'✈️'},
+  {key:'metro',nome:'Metrô',ico:'🚇'},
+  {key:'roupas_thiago',nome:'Roupas Thiago',ico:'👔'},
+  {key:'roupas_nataly',nome:'Roupas Nataly',ico:'👗'},
+  {key:'julia_roupas',nome:'Júlia Roupas',ico:'👚'},
+  {key:'julia_brinquedos',nome:'Júlia Brinquedos',ico:'🧸'},
+  {key:'julia_remedios',nome:'Júlia Remédios',ico:'💊'},
+  {key:'julia_lazer',nome:'Júlia Lazer',ico:'🎡'},
+  {key:'julia_outros',nome:'Júlia Outros',ico:'🎀'},
+  {key:'outros',nome:'Outros',ico:'📦'},
+];
+
+let CATS_CUSTOM = []; // carregadas do Firebase
+
+function getAllCats() {
+  return [...CATS_DEFAULT, ...CATS_CUSTOM];
+}
+
+function getCatIco(key) {
+  const cat = getAllCats().find(c => c.key === key);
+  return cat ? cat.ico : '📦';
+}
+
+function getCatNome(key) {
+  const cat = getAllCats().find(c => c.key === key);
+  return cat ? cat.nome : key;
+}
+
+function buildCatSelect(selId, selectedVal) {
+  const sel = document.getElementById(selId);
+  if (!sel) return;
+  const val = selectedVal || sel.value;
+  sel.innerHTML = getAllCats().map(c =>
+    `<option value="${c.key}"${c.key===val?' selected':''}>${c.ico} ${c.nome}</option>`
+  ).join('');
+}
+
+function buildCatFilters() {
+  const cont = document.getElementById('g-filters');
+  if (!cont) return;
+  const cur = cont.querySelector('.ftag.on')?.dataset?.cat || 'all';
+  cont.innerHTML = `<div class="ftag ${cur==='all'?'on':''}" onclick="setGF(this,'all')">Todas</div>` +
+    getAllCats().map(c =>
+      `<div class="ftag ${c.key===cur?'on':''}" onclick="setGF(this,'${c.key}')" data-cat="${c.key}">${c.ico} ${c.nome}</div>`
+    ).join('');
+}
+
+function rCfgCats() {
+  const all = getAllCats();
+  // Lista de padrão
+  const defEl = document.getElementById('cats-default-list');
+  if (defEl) defEl.innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:8px;padding:8px 0">${
+    CATS_DEFAULT.map(c=>`<span style="background:var(--s2);border:1px solid var(--border);border-radius:20px;padding:4px 12px;font-size:13px">${c.ico} ${c.nome}</span>`).join('')
+  }</div>`;
+  // Lista de customizadas
+  const custEl = document.getElementById('cats-custom-list');
+  if (custEl) {
+    if (CATS_CUSTOM.length === 0) {
+      custEl.innerHTML = '<div class="empty"><div class="eico">⚙️</div>Nenhuma categoria personalizada ainda.</div>';
+    } else {
+      custEl.innerHTML = CATS_CUSTOM.map((c,i) =>
+        `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
+          <span>${c.ico} <strong>${c.nome}</strong> <span style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted);margin-left:6px">${c.key}</span></span>
+          <button onclick="excluirCategoria(${i})" style="background:none;border:1px solid var(--border);border-radius:4px;padding:3px 10px;font-size:11px;cursor:pointer;color:var(--red)">Excluir</button>
+        </div>`
+      ).join('');
+    }
+  }
+}
+
+function salvarNovaCategoria() {
+  const key = document.getElementById('nc-key').value.trim().toLowerCase().replace(/\s+/g,'_');
+  const nome = document.getElementById('nc-nome').value.trim();
+  const ico = document.getElementById('nc-ico').value.trim() || '📦';
+  if (!key || !nome) { toast('Preencha chave e nome'); return; }
+  if (getAllCats().find(c => c.key === key)) { toast('Essa chave já existe'); return; }
+  CATS_CUSTOM.push({key, nome, ico});
+  salvarCatsFirebase();
+  document.getElementById('nc-key').value = '';
+  document.getElementById('nc-nome').value = '';
+  document.getElementById('nc-ico').value = '';
+  buildCatSelect('g-cat');
+  buildCatFilters();
+  rCfgCats();
+  toast('Categoria adicionada!');
+}
+
+function excluirCategoria(idx) {
+  CATS_CUSTOM.splice(idx, 1);
+  salvarCatsFirebase();
+  buildCatSelect('g-cat');
+  buildCatFilters();
+  rCfgCats();
+  toast('Categoria excluída');
+}
+
+async function salvarCatsFirebase() {
+  try {
+    await fbSet(ref(fbDB,'granafam/cats_custom'), CATS_CUSTOM);
+  } catch(e) { console.error('Erro ao salvar cats:', e); }
+}
+
+async function carregarCatsFirebase() {
+  try {
+    const snap = await fbGet(ref(fbDB,'granafam/cats_custom'));
+    CATS_CUSTOM = snap.val() || [];
+  } catch(e) { CATS_CUSTOM = []; }
+  buildCatSelect('g-cat');
+  buildCatFilters();
+}
+
+const TITLES = {dash:'Visão Geral',gastos:'Gastos do Mês',ck:'Checklist de Pagamentos',sem:'Gastos Semanais',fixos:'Gastos Fixos',emp:'Empréstimos e Financiamentos',parc:'Parcelas',terc:'Gastos de Terceiros',cat:'Categorias',ag:'Acompanhamento Geral',cartao:'Visão por Cartão','cfg-cats':'Gerenciar Categorias'};
 let CM=6, CY=2026, CW=1;
 
 function showSyncStatus(ok) {
@@ -987,7 +1096,11 @@ let S = {
     {id:41,desc:'Roteador',cart:'Mercado Pago',valParc:35.74,qtdTotal:2,qtdRestante:2,mesCompra:6,mesInicio:7,anoInicio:2026},
     {id:42,desc:'IBEP',cart:'Itaú Azul',valParc:38.9,qtdTotal:2,qtdRestante:2,mesCompra:6,mesInicio:7,anoInicio:2026},
     {id:43,desc:'Viagem Porto de galinhas',cart:'Itaú Azul',valParc:464.62,qtdTotal:2,qtdRestante:2,mesCompra:6,mesInicio:7,anoInicio:2026},
-    {id:44,desc:'Mecânico',cart:'Itaú Azul',valParc:1200.0,qtdTotal:2,qtdRestante:2,mesCompra:6,mesInicio:7,anoInicio:2026}
+    {id:44,desc:'Mecânico',cart:'BRB Black',valParc:600.0,qtdTotal:2,qtdRestante:2,mesCompra:6,mesInicio:7,anoInicio:2026},
+    {id:45,desc:'Cirurgia Ju',cart:'BRB Black',valParc:4950.0,qtdTotal:2,qtdRestante:2,mesCompra:6,mesInicio:7,anoInicio:2026},
+    {id:46,desc:'Carrinho Quarto',cart:'BRB Black',valParc:66.0,qtdTotal:2,qtdRestante:2,mesCompra:6,mesInicio:7,anoInicio:2026},
+    {id:47,desc:'Maquiagem',cart:'Itaú Azul',valParc:34.8,qtdTotal:4,qtdRestante:4,mesCompra:6,mesInicio:7,anoInicio:2026},
+    {id:48,desc:'Roupa ensaio',cart:'BRB Black',valParc:73.33,qtdTotal:3,qtdRestante:3,mesCompra:6,mesInicio:7,anoInicio:2026}
   ]),
   cks: ld('cks', [
     {id:1,desc:'Condomínio',venc:5,comp:'corrente',val:680,ok:false},
@@ -1030,6 +1143,7 @@ function persist(){
 
 // ── NAVEGAÇÃO ─────────────────────────────────────────────────────────────────
 function goTo(el,v){
+  if(v==='cfg-cats') { setTimeout(()=>rCfgCats(),50); }
   document.querySelectorAll('.ni').forEach(n=>n.classList.remove('on'));
   if(el)el.classList.add('on');
   document.querySelectorAll('.view').forEach(x=>x.classList.remove('on'));
@@ -1226,7 +1340,7 @@ let gF='all', gSQ='';
 function gastoRow(g){
   return `<div class="row" id="grow-${g.id}">
     <div class="row-l">
-      <div class="ibox" style="cursor:pointer" onclick="editGasto(${g.id})">${ICOS[g.cat]||'📦'}</div>
+      <div class="ibox" style="cursor:pointer" onclick="editGasto(${g.id})">${getCatIco(g.cat)}</div>
       <div style="flex:1;min-width:0">
         <div class="r-name">${g.desc}</div>
         <div class="r-meta">${fmtDate(g.data)}${g.cart?' · '+g.cart:''} · ${g.cat}</div>
@@ -1360,7 +1474,7 @@ function rSem(){
   document.getElementById('sem-pct').textContent=pct+'%';
   document.getElementById('sem-rest').textContent=fmt(tot)+' de '+fmt(budget)+' · sobram '+fmt(Math.max(budget-tot,0));
   const cats={};items.forEach(g=>{cats[g.cat]=(cats[g.cat]||0)+g.val;});
-  document.getElementById('sem-cats').innerHTML=Object.entries(cats).sort((a,b)=>b[1]-a[1]).map(([c,v])=>`<div class="pw" style="margin-bottom:8px"><div class="ph"><span class="pn">${ICOS[c]||'📦'} ${c}</span><span class="pv">${fmt(v)}</span></div><div class="pbg"><div class="pf" style="width:${tot>0?Math.min((v/tot)*100,100).toFixed(0):0}%;background:${CCAT[c]||'#999'}"></div></div></div>`).join('');
+  document.getElementById('sem-cats').innerHTML=Object.entries(cats).sort((a,b)=>b[1]-a[1]).map(([c,v])=>`<div class="pw" style="margin-bottom:8px"><div class="ph"><span class="pn">${getCatIco(c)} ${c}</span><span class="pv">${fmt(v)}</span></div><div class="pbg"><div class="pf" style="width:${tot>0?Math.min((v/tot)*100,100).toFixed(0):0}%;background:${CCAT[c]||'#999'}"></div></div></div>`).join('');
 }
 
 // ── GASTOS FIXOS ─────────────────────────────────────────────────────────────
@@ -1615,7 +1729,7 @@ function rCat(){
   document.getElementById('cat-grid').innerHTML=Object.entries(cats).sort((a,b)=>b[1]-a[1]).map(([c,v])=>{
     const pct=((v/tot)*100).toFixed(0);
     return `<div class="cat-card" onclick="abrirCat('${c}','${pref||''}')">
-      <div class="cat-ico">${ICOS[c]||'📦'}</div>
+      <div class="cat-ico">${getCatIco(c)}</div>
       <div class="cat-nome">${c}</div>
       <div class="cat-val">${fmtK(v)}</div>
       <div class="cat-pct">${pct}% do total</div>
@@ -1625,7 +1739,7 @@ function rCat(){
 }
 function abrirCat(cat,pref){
   document.getElementById('cat-detalhe').style.display='block';
-  document.getElementById('cat-det-title').textContent=(ICOS[cat]||'📦')+' '+cat;
+  document.getElementById('cat-det-title').textContent=(getCatIco(cat))+' '+cat;
   const items=S.gastos.filter(g=>g.cat===cat&&(!pref||(g.data||'').startsWith(pref))).sort((a,b)=>b.data.localeCompare(a.data));
   document.getElementById('cat-det-list').innerHTML=items.length?items.map(g=>gastoRow(g)).join(''):'<div class="empty">Nenhum gasto</div>';
   document.getElementById('cat-detalhe').scrollIntoView({behavior:'smooth'});
@@ -1786,7 +1900,7 @@ function rCartao(){
   // Lista de gastos
   document.getElementById('cartao-gastos-title').textContent = `Gastos no ciclo (${fd(ciclo.ini)} → ${fd(ciclo.fim)})`;
   document.getElementById('cartao-gastos-list').innerHTML = gastos.length
-    ? gastos.map(g=>`<div class="row"><div class="row-l"><div class="ibox">${ICOS[g.cat]||'📦'}</div>
+    ? gastos.map(g=>`<div class="row"><div class="row-l"><div class="ibox">${getCatIco(g.cat)}</div>
         <div><div class="r-name">${g.desc}</div><div class="r-meta">${fmtDate(g.data)} · ${g.cat}</div></div></div>
         <div class="r-val neg">${fmt(g.val)}</div></div>`).join('')
     : '<div class="empty"><div class="eico">📭</div>Nenhum gasto neste cartão no ciclo</div>';
@@ -1808,7 +1922,7 @@ function rCartao(){
 
   // Lista de fixos
   document.getElementById('cartao-fixos-list').innerHTML = fixos.length
-    ? fixos.map(f=>`<div class="row"><div class="row-l"><div class="ibox">${ICOS[f.cat]||'💳'}</div>
+    ? fixos.map(f=>`<div class="row"><div class="row-l"><div class="ibox">${getCatIco(f.cat)}</div>
         <div><div class="r-name">${f.desc}</div>
         <div class="r-meta">${f.variavel?'variável':'fixo'}${f.descontadoFolha?' · desconto em folha':''}</div></div></div>
         <div class="r-val ${f.descontadoFolha?'':'neg'}" style="${f.descontadoFolha?'opacity:.5':''}">${fmt(f.val)}</div></div>`).join('')
@@ -1999,7 +2113,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, set, onValue, get } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
 (function(){
-  const FB_VERSION = '2026-07-v10';
+  const FB_VERSION = '2026-07-v12';
   const fbConfig = {
     apiKey: "AIzaSyCPvz65aVIn9lxIALc4BcOY20PevqXStVA",
     authDomain: "app-financeiro-6fad9.firebaseapp.com",
@@ -2013,6 +2127,10 @@ import { getDatabase, ref, set, onValue, get } from 'https://www.gstatic.com/fir
   const app = initializeApp(fbConfig);
   const database = getDatabase(app);
   const dbRef = ref(database, 'granafam');
+  // Expõe ref/get/set para funções de categorias
+  window.fbDB = database;
+  window.fbGet = get;
+  window.fbSet = set;
 
   // Dados transacionais — sincronizam entre dispositivos
   const KEYS = ['gastos','cks','tercParcs','tercGastos','rendaExtra'];
@@ -2049,7 +2167,7 @@ import { getDatabase, ref, set, onValue, get } from 'https://www.gstatic.com/fir
       KEYS.forEach(k=>{ if(data[k]!==undefined){ S[k]=data[k]; try{localStorage.setItem(k,JSON.stringify(data[k]));}catch{} } });
       aplicaMigracoes();
       showSyncStatus(true);
-      rDash();
+      carregarCatsFirebase().then(()=>rDash());
       console.log('✓ Dados Firebase v'+FB_VERSION);
     } else if(data && data._version !== FB_VERSION){
       // Versão antiga no Firebase — mantém defaults do código e sobe versão nova
@@ -2061,13 +2179,13 @@ import { getDatabase, ref, set, onValue, get } from 'https://www.gstatic.com/fir
       aplicaMigracoes();
       window.pushToFirebase(); // Sobe dados com nova versão
       showSyncStatus(true);
-      rDash();
+      carregarCatsFirebase().then(()=>rDash());
     } else {
       // Firebase vazio — sobe defaults
       console.log('Firebase vazio — enviando defaults...');
       window.pushToFirebase();
       showSyncStatus(true);
-      rDash();
+      carregarCatsFirebase().then(()=>rDash());
     }
 
     // Listener tempo real — atualiza quando outro dispositivo mudar
