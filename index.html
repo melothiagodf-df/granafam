@@ -2108,6 +2108,7 @@ function openM(id,sub){
   const today=new Date().toISOString().split('T')[0];
   if(id==='gasto'){
     document.getElementById('g-data').value=today;
+    buildCartSelect('g-cart','BRB Black');
     document.getElementById('g-is-parc').checked=false;
     document.getElementById('g-parc-campos').style.display='none';
     document.getElementById('g-parc-calc').textContent='—';
