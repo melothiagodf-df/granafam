@@ -1,5 +1,5 @@
 // Mude este número toda vez que fizer uma atualização
-const CACHE_VERSION = 'granafam-v21';
+const CACHE_VERSION = 'granafam-v22';
 const ASSETS = [
   '/granafam/',
   '/granafam/index.html',
@@ -45,6 +45,7 @@ self.addEventListener('fetch', e => {
       url.includes('fonts.googleapis') ||
       url.includes('fonts.gstatic') ||
       url.includes('cdnjs.cloudflare') ||
+      url.includes('cdn.jsdelivr') ||
       url.includes('cdn.pluggy')) {
     return;
   }
