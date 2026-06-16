@@ -218,7 +218,7 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
   .bottom-nav{display:flex}
 }
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 </head>
 <body>
 <aside class="sb" id="sidebar">
@@ -740,7 +740,7 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
 </div>
 
 <script>
-const DATA_VERSION = '2026-07-v21';
+const DATA_VERSION = '2026-07-v22';
 
 
 const MNS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
@@ -1948,10 +1948,18 @@ function popularSelectRelatorio(){
 }
 
 function gerarRelatorioMesPDF(){
-  const m1 = parseInt(document.getElementById('ag-rel-mes').value);
-  const idx = MESES_AG.indexOf(m1);
-  const nomeMes = MLBLS_AG[idx] || ('Mês '+m1);
-  const ciclo = getCiclo(m1);
+  try {
+    if(typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined'){
+      toast('Biblioteca de PDF não carregou. Verifique sua conexão com a internet e tente novamente.');
+      return;
+    }
+    const selEl = document.getElementById('ag-rel-mes');
+    if(!selEl || !selEl.value){ toast('Selecione um mês primeiro'); return; }
+    const m1 = parseInt(selEl.value);
+    if(isNaN(m1)){ toast('Mês inválido'); return; }
+    const idx = MESES_AG.indexOf(m1);
+    const nomeMes = MLBLS_AG[idx] || ('Mês '+m1);
+    const ciclo = getCiclo(m1);
 
   const gastosDoMes = ciclo ? S.gastos.filter(g=>g.data>=ciclo.ini&&g.data<=ciclo.fim) : [];
   const totalGastos = gastosDoMes.reduce((a,g)=>a+(g.val||0),0);
@@ -2044,6 +2052,10 @@ function gerarRelatorioMesPDF(){
 
   doc.save(`GranaFam_${nomeMes.replace('/','_')}.pdf`);
   toast('Relatório gerado!');
+  } catch(err) {
+    console.error('Erro ao gerar PDF:', err);
+    toast('Erro ao gerar PDF: '+err.message);
+  }
 }
 
 function rAg(){
@@ -2417,7 +2429,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, set, onValue, get } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
 (function(){
-  const FB_VERSION = '2026-07-v14';
+  const FB_VERSION = '2026-07-v15';
   const fbConfig = {
     apiKey: "AIzaSyCPvz65aVIn9lxIALc4BcOY20PevqXStVA",
     authDomain: "app-financeiro-6fad9.firebaseapp.com",
