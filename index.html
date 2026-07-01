@@ -581,7 +581,7 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
     <div class="fg"><label class="flbl">Cartão / Conta</label>
       <select class="fsel" id="g-cart"></select>
     </div>
-    <div class="mfoot"><button class="btn btn-s" onclick="closeM('gasto')">Cancelar</button><button class="btn btn-p" onclick="saveGasto()">Salvar</button></div>
+    <div class="mfoot"><button class="btn btn-s" onclick="closeM('gasto')">Cancelar</button><button class="btn btn-s" onclick="saveGasto(true)" style="flex:1.4">Salvar e novo</button><button class="btn btn-p" onclick="saveGasto()">Salvar</button></div>
   </div>
 </div>
 
@@ -648,7 +648,7 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
     </div>
     <div class="fg"><label class="flbl">Mês início</label><select class="fsel" id="pa-mes"><option value="7">Jul/26</option><option value="8">Ago/26</option><option value="9">Set/26</option><option value="10">Out/26</option><option value="11">Nov/26</option><option value="12">Dez/26</option></select></div>
     <div class="c-lbl" id="pa-calc-lbl">Valor por parcela</div><div style="font-family:'DM Mono',monospace;font-size:14px;padding:4px 0" id="pa-calc">—</div>
-    <div class="mfoot"><button class="btn btn-s" onclick="closeM('parc-add')">Cancelar</button><button class="btn btn-p" onclick="saveParc()">Salvar</button></div>
+    <div class="mfoot"><button class="btn btn-s" onclick="closeM('parc-add')">Cancelar</button><button class="btn btn-s" onclick="saveParc(true)" style="flex:1.4">Salvar e novo</button><button class="btn btn-p" onclick="saveParc()">Salvar</button></div>
   </div>
 </div>
 
@@ -703,15 +703,39 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
       </div>
       <div class="fg">
         <label class="flbl">Tipo</label>
-        <select class="fsel" id="re-tipo" onchange="document.getElementById('re-mes-wrap').style.display=this.value==='unico'?'block':'none'">
+        <select class="fsel" id="re-tipo" onchange="onRendaTipoChange()">
           <option value="mensal">Mensal (todos os meses)</option>
           <option value="unico">Somente um mês</option>
+          <option value="range">Intervalo de meses</option>
         </select>
       </div>
     </div>
     <div class="fg" id="re-mes-wrap" style="display:none">
       <label class="flbl">Mês</label>
       <select class="fsel" id="re-mes">
+        <option value="7">Julho 2026</option>
+        <option value="8">Agosto 2026</option>
+        <option value="9">Setembro 2026</option>
+        <option value="10">Outubro 2026</option>
+        <option value="11">Novembro 2026</option>
+        <option value="12">Dezembro 2026</option>
+        <option value="13">Janeiro 2027</option>
+        <option value="14">Fevereiro 2027</option>
+        <option value="15">Março 2027</option>
+        <option value="16">Abril 2027</option>
+        <option value="17">Maio 2027</option>
+        <option value="18">Junho 2027</option>
+        <option value="19">Julho 2027</option>
+        <option value="20">Agosto 2027</option>
+        <option value="21">Setembro 2027</option>
+        <option value="22">Outubro 2027</option>
+        <option value="23">Novembro 2027</option>
+        <option value="24">Dezembro 2027</option>
+      </select>
+    </div>
+    <div class="fg" id="re-mes-fim-wrap" style="display:none">
+      <label class="flbl">Até o mês</label>
+      <select class="fsel" id="re-mes-fim">
         <option value="7">Julho 2026</option>
         <option value="8">Agosto 2026</option>
         <option value="9">Setembro 2026</option>
@@ -740,7 +764,7 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
 </div>
 
 <script>
-const DATA_VERSION = '2026-07-v24';
+const DATA_VERSION = '2026-07-v25';
 
 
 const MNS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
@@ -2267,6 +2291,11 @@ function fecharCatDet(){document.getElementById('cat-detalhe').style.display='no
 let fixoMeio='cartao';
 function openM(id,sub){
   const today=new Date().toISOString().split('T')[0];
+  if(id==='parc-add'){
+    // Pré-seleciona o mês atual de competência
+    const selMes = document.getElementById('pa-mes');
+    if(selMes){ selMes.value = String(CM+1); }
+  }
   if(id==='gasto'){
     document.getElementById('g-data').value=today;
     const gc=document.getElementById('g-cart'); if(gc) gc.value='BRB Black';
@@ -2306,7 +2335,7 @@ function calcPa(){
   }
 }
 
-function saveGasto(){
+function saveGasto(eNovo){
   const desc=document.getElementById('g-desc').value.trim();
   const val=parseFloat(document.getElementById('g-val').value)||0;
   if(!desc||!val)return;
@@ -2314,8 +2343,16 @@ function saveGasto(){
   const cart=document.getElementById('g-cart').value||'';
   const cat=document.getElementById('g-cat').value;
   S.gastos.push({id:nid(),desc,val,cat,data,cart});
-  persist();closeM('gasto');toast();rDash();rGastos();
+  persist();toast();rDash();rGastos();
   ['g-desc','g-val'].forEach(id=>document.getElementById(id).value='');
+  if(eNovo){
+    // Mantém modal aberto, limpa campos e foca na descrição
+    document.getElementById('g-data').value=today;
+    const gc=document.getElementById('g-cart'); if(gc) gc.value='BRB Black';
+    setTimeout(()=>document.getElementById('g-desc').focus(),50);
+  } else {
+    closeM('gasto');
+  }
 }
 
 function saveCk(){
@@ -2358,7 +2395,7 @@ function saveEmp(){
   ['emp-nome','emp-parc','emp-fin','emp-atual','emp-total-inp'].forEach(id=>document.getElementById(id).value='');
 }
 
-function saveParc(){
+function saveParc(eNovo){
   const desc=document.getElementById('pa-desc').value.trim();
   if(!desc)return;
   const n=parseInt(document.getElementById('pa-n').value)||1;
@@ -2373,9 +2410,16 @@ function saveParc(){
   S.parcs.push({id:nid(),desc,
     cart:document.getElementById('pa-cart').value,
     valParc,qtdTotal:n,qtdRestante:n,mesInicio:mesI});
-  persist();closeM('parc-add');toast();rParc();
+  persist();toast();rParc();
   ['pa-desc','pa-tot','pa-parcval','pa-n'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('pa-calc').textContent='—';
   setPaModo('total');
+  if(eNovo){
+    // Mantém modal aberto, foca na descrição
+    setTimeout(()=>document.getElementById('pa-desc').focus(),50);
+  } else {
+    closeM('parc-add');
+  }
 }
 
 function saveTercGasto(){
@@ -2406,6 +2450,12 @@ function saveTercParc(){
   ['tp-desc','tp-val','tp-qtd'].forEach(id=>document.getElementById(id).value='');
 }
 
+function onRendaTipoChange(){
+  const tipo = document.getElementById('re-tipo').value;
+  document.getElementById('re-mes-wrap').style.display = (tipo==='unico'||tipo==='range') ? 'block' : 'none';
+  document.getElementById('re-mes-fim-wrap').style.display = tipo==='range' ? 'block' : 'none';
+}
+
 // ── MOBILE ────────────────────────────────────────────────────────────────────
 function toggleSB(){
   document.getElementById('sidebar').classList.toggle('open');
@@ -2432,7 +2482,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, set, onValue, get } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
 (function(){
-  const FB_VERSION = '2026-07-v17';
+  const FB_VERSION = '2026-07-v18';
   const fbConfig = {
     apiKey: "AIzaSyCPvz65aVIn9lxIALc4BcOY20PevqXStVA",
     authDomain: "app-financeiro-6fad9.firebaseapp.com",
