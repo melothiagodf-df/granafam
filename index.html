@@ -295,6 +295,7 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
           <div id="d-ck-mini"></div>
         </div>
       </div>
+      <div style="text-align:right;padding:8px 4px 0;font-family:'DM Mono',monospace;font-size:10px;color:var(--muted)" id="dash-ultima-atualizacao"></div>
     </div>
 
     <!-- GASTOS DO MÊS -->
@@ -764,7 +765,7 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
 </div>
 
 <script>
-const DATA_VERSION = '2026-07-v25';
+const DATA_VERSION = '2026-07-v26';
 
 
 const MNS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
@@ -1487,6 +1488,32 @@ function calcTotais(m1){
 
 
 // ── DASHBOARD ─────────────────────────────────────────────────────────────────
+// Formata timestamp para exibição amigável
+function fmtTs(ts){
+  if(!ts) return '';
+  const d = new Date(ts);
+  const hoje = new Date();
+  const ontem = new Date(hoje); ontem.setDate(ontem.getDate()-1);
+  const hj = hoje.toDateString() === d.toDateString();
+  const ont = ontem.toDateString() === d.toDateString();
+  const hora = d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  if(hj) return 'hoje '+hora;
+  if(ont) return 'ontem '+hora;
+  return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})+' '+hora;
+}
+
+function atualizarUltimaAtualizacao(){
+  const el = document.getElementById('dash-ultima-atualizacao');
+  if(!el) return;
+  // Pega o timestamp mais recente entre gastos e parcelas
+  const tsGastos = S.gastos.map(g=>g.createdAt||0);
+  const tsParcs  = S.parcs.map(p=>p.createdAt||0);
+  const todos    = [...tsGastos,...tsParcs].filter(Boolean);
+  if(!todos.length){ el.textContent=''; return; }
+  const ultimo = Math.max(...todos);
+  el.textContent = '🕐 Última inclusão: ' + fmtTs(ultimo);
+}
+
 function rDash(){
   const m1=CM+1;
   const t=calcTotais(m1);
@@ -1550,6 +1577,7 @@ function rDash(){
     const cls=c.ok?'b-pago':dias<0?'b-venc':dias<=5?'b-soon':'b-ok';
     return `<div class="row"><div class="row-l"><div><div class="r-name">${c.desc}</div><div class="r-meta">Dia ${c.venc}</div></div></div><div class="row-r"><span class="badge ${cls}">${dias<0?'venc':dias===0?'hoje':dias+'d'}</span><span class="r-val neg">${fmt(c.val)}</span></div></div>`;
   }).join(''):'<div class="empty">Tudo pago! ✓</div>';
+  atualizarUltimaAtualizacao();
 }
 
 // ── GASTOS DO MÊS ─────────────────────────────────────────────────────────────
@@ -1560,7 +1588,7 @@ function gastoRow(g){
       <div class="ibox" style="cursor:pointer" onclick="editGasto(${g.id})">${getCatIco(g.cat)}</div>
       <div style="flex:1;min-width:0">
         <div class="r-name">${g.desc}</div>
-        <div class="r-meta">${fmtDate(g.data)}${g.cart?' · '+g.cart:''} · ${g.cat}</div>
+        <div class="r-meta">${fmtDate(g.data)}${g.cart?' · '+g.cart:''} · ${g.cat}${g.createdAt?' · incluído '+fmtTs(g.createdAt):''}</div>
       </div>
     </div>
     <div class="row-r">
@@ -1852,7 +1880,7 @@ function rParc(){
     const ulm=p.mesInicio+p.qtdTotal-1;
     const ulStr=ulm<=12?MSH[ulm-1]+'/26':MSH[(ulm-1)%12]+'/'+String(2026+Math.floor((ulm-1)/12)).slice(2);
     return `<tr style="${ativa?'':'opacity:.4'}">
-      <td style="font-weight:500">${p.desc}</td>
+      <td style="font-weight:500">${p.desc}<br><span style="font-size:9px;color:var(--muted);font-family:'DM Mono',monospace">${p.createdAt?fmtTs(p.createdAt):''}</span></td>
       <td style="font-size:11px;color:var(--muted)">${p.cart}</td>
       <td class="r neg">${ativa?fmt(p.valParc):'—'}</td>
       <td class="r">${ativa?parcAtual+'/'+p.qtdTotal:'—'}</td>
@@ -2342,7 +2370,17 @@ function saveGasto(eNovo){
   const data=document.getElementById('g-data').value;
   const cart=document.getElementById('g-cart').value||'';
   const cat=document.getElementById('g-cat').value;
-  S.gastos.push({id:nid(),desc,val,cat,data,cart});
+  // Verifica duplicata: mesma descrição + valor + data
+  const dup=S.gastos.find(g=>
+    g.desc.trim().toLowerCase()===desc.toLowerCase() &&
+    Math.abs((g.val||0)-val)<0.01 &&
+    g.data===data
+  );
+  if(dup){
+    const ts=dup.createdAt?(' (incluído '+fmtTs(dup.createdAt)+')'):' ';
+    if(!confirm('⚠️ Possível duplicata'+ts+'\n\n"'+desc+'" · '+fmt(val)+' · '+data+'\n\nEsse gasto já foi registrado. Deseja incluir mesmo assim?')) return;
+  }
+  S.gastos.push({id:nid(),desc,val,cat,data,cart,createdAt:Date.now()});
   persist();toast();rDash();rGastos();
   ['g-desc','g-val'].forEach(id=>document.getElementById(id).value='');
   if(eNovo){
@@ -2407,9 +2445,20 @@ function saveParc(eNovo){
     valParc = parseFloat(document.getElementById('pa-parcval').value)||0;
   }
   const mesI=parseInt(document.getElementById('pa-mes').value);
+  const cartVal=document.getElementById('pa-cart').value;
+  // Verifica duplicata: mesma descrição + cartão + valor/parcela
+  const dup=S.parcs.find(p=>
+    p.desc.trim().toLowerCase()===desc.toLowerCase() &&
+    p.cart===cartVal &&
+    Math.abs((p.valParc||0)-valParc)<0.01
+  );
+  if(dup){
+    const ts=dup.createdAt?(' (incluída '+fmtTs(dup.createdAt)+')'):' ';
+    if(!confirm('⚠️ Possível duplicata'+ts+'\n\n"'+desc+'" · '+fmt(valParc)+'/mês · '+cartVal+'\n\nEssa parcela já foi registrada. Deseja incluir mesmo assim?')) return;
+  }
   S.parcs.push({id:nid(),desc,
-    cart:document.getElementById('pa-cart').value,
-    valParc,qtdTotal:n,qtdRestante:n,mesInicio:mesI});
+    cart:cartVal,
+    valParc,qtdTotal:n,qtdRestante:n,mesInicio:mesI,createdAt:Date.now()});
   persist();toast();rParc();
   ['pa-desc','pa-tot','pa-parcval','pa-n'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('pa-calc').textContent='—';
@@ -2482,7 +2531,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, set, onValue, get } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
 (function(){
-  const FB_VERSION = '2026-07-v18';
+  const FB_VERSION = '2026-07-v19';
   const fbConfig = {
     apiKey: "AIzaSyCPvz65aVIn9lxIALc4BcOY20PevqXStVA",
     authDomain: "app-financeiro-6fad9.firebaseapp.com",
