@@ -765,7 +765,7 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
 </div>
 
 <script>
-const DATA_VERSION = '2026-07-v26';
+const DATA_VERSION = '2026-07-v27';
 
 
 const MNS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
@@ -1564,14 +1564,14 @@ function rDash(){
   document.getElementById('dash-disp-rest').textContent='Disponível restante: '+fmt(Math.max(t.disp-t.gastoCiclo,0));
   // Warning
   const hoje2=new Date();const em10=new Date();em10.setDate(em10.getDate()+10);
-  const prox=S.cks.filter(c=>{if(c.ok)return false;const dv=new Date(CY,CM,c.venc);return dv>=hoje2&&dv<=em10;}).sort((a,b)=>a.venc-b.venc);
+  const prox=S.cks.filter(c=>{if(getCkStatus(c.id))return false;const dv=new Date(CY,CM,c.venc);return dv>=hoje2&&dv<=em10;}).sort((a,b)=>a.venc-b.venc);
   const wCard=document.getElementById('dash-warn');
   if(prox.length){wCard.style.display='block';document.getElementById('dash-warn-list').innerHTML=prox.map(c=>{const dias=Math.round((new Date(CY,CM,c.venc)-hoje2)/86400000);return `<div class="warn-item"><span class="warn-dias">${dias===0?'hoje':dias===1?'amanhã':'em '+dias+'d'}</span><span style="flex:1;color:var(--muted);font-size:12px">${c.desc}</span><span style="font-family:'DM Mono',monospace;font-size:12px;font-weight:500">${fmt(c.val)}</span></div>`;}). join('');}else{wCard.style.display='none';}
   // Últimos gastos
   const last5=[...S.gastos].sort((a,b)=>b.data.localeCompare(a.data)).slice(0,5);
   document.getElementById('d-gastos').innerHTML=last5.length?last5.map(g=>gastoRow(g)).join(''):'<div class="empty"><div class="eico">📭</div>Nenhum gasto</div>';
   // Mini checklist
-  const proxCk=[...S.cks].filter(c=>!c.ok).sort((a,b)=>a.venc-b.venc).slice(0,5);
+  const proxCk=[...S.cks].filter(c=>!getCkStatus(c.id)).sort((a,b)=>a.venc-b.venc).slice(0,5);
   document.getElementById('d-ck-mini').innerHTML=proxCk.length?proxCk.map(c=>{
     const hoje3=new Date().getDate();const dias=c.venc-hoje3;
     const cls=c.ok?'b-pago':dias<0?'b-venc':dias<=5?'b-soon':'b-ok';
@@ -1633,7 +1633,11 @@ function updateGasto(id){
   rDash(); rGastos(); rSem();
 }
 function rGastos(){
-  let items=[...S.gastos].sort((a,b)=>b.data.localeCompare(a.data));
+  // Filtra gastos pelo ciclo BRB do mês selecionado
+  const ciclo = getCiclo(CM+1);
+  let items=[...S.gastos]
+    .filter(g => ciclo ? g.data >= ciclo.ini && g.data <= ciclo.fim : true)
+    .sort((a,b)=>b.data.localeCompare(a.data));
   if(gSQ) items=items.filter(g=>g.desc.toLowerCase().includes(gSQ.toLowerCase()));
   if(gF!=='all') items=items.filter(g=>g.cat===gF);
   if(gCartF!=='all') items=items.filter(g=>(g.cart||'')===gCartF);
@@ -1650,6 +1654,43 @@ function filtGastos(v){gSQ=v;rGastos();}
 function delGasto(id){S.gastos=S.gastos.filter(g=>g.id!==id);persist();rGastos();rDash();}
 
 // ── CHECKLIST ─────────────────────────────────────────────────────────────────
+const CARTOES_CK = ['BRB Black','Itaú Azul','Nubank','Inter','Mercado Pago','Renner','Itaú Azul (Nataly)'];
+
+// Checklist por mês — helpers
+function ckMesKey(){ return (CM+1)+'-'+CY; }
+function isCartaoCk(desc){ return CARTOES_CK.some(c=>desc.toLowerCase().includes(c.toLowerCase())); }
+function getCkStatus(id){ 
+  const k = 'ck_status_'+ckMesKey();
+  const d = JSON.parse(localStorage.getItem(k)||'{}');
+  return !!d[id];
+}
+function setCkStatus(id, ok){
+  const k = 'ck_status_'+ckMesKey();
+  const d = JSON.parse(localStorage.getItem(k)||'{}');
+  d[id] = ok;
+  localStorage.setItem(k, JSON.stringify(d));
+  // Sincroniza no Firebase via S
+  if(!S.ckStatus) S.ckStatus = {};
+  if(!S.ckStatus[ckMesKey()]) S.ckStatus[ckMesKey()] = {};
+  S.ckStatus[ckMesKey()][id] = ok;
+  persist();
+}
+function getCkValCartao(id){
+  const k = 'ck_val_'+ckMesKey();
+  const d = JSON.parse(localStorage.getItem(k)||'{}');
+  return d[id] !== undefined ? d[id] : '';
+}
+function setCkValCartao(id, val){
+  const k = 'ck_val_'+ckMesKey();
+  const d = JSON.parse(localStorage.getItem(k)||'{}');
+  d[id] = val;
+  localStorage.setItem(k, JSON.stringify(d));
+  if(!S.ckVals) S.ckVals = {};
+  if(!S.ckVals[ckMesKey()]) S.ckVals[ckMesKey()] = {};
+  S.ckVals[ckMesKey()][id] = val;
+  persist();
+}
+
 function rCk(){
   document.getElementById('ck-mes-lbl').textContent=MNS[CM]+' '+CY;
   const dias=new Date(CY,CM+1,0).getDate();
@@ -1657,43 +1698,60 @@ function rCk(){
   const hoje=new Date().getDate(),mesH=new Date().getMonth(),anoH=new Date().getFullYear();
   const ehHoje=CM===mesH&&CY===anoH;
   document.getElementById('ck-weekdays').innerHTML=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].map(d=>`<div class="ck-weekday">${d}</div>`).join('');
-  const mapa={};S.cks.forEach(c=>{mapa[c.venc]=mapa[c.venc]||[];mapa[c.venc].push(c);});
+  const mapa={};
+  S.cks.forEach(c=>{mapa[c.venc]=mapa[c.venc]||[];mapa[c.venc].push(c);});
   let cal='';
   for(let i=0;i<prim;i++)cal+=`<div style="background:none;border:none"></div>`;
   for(let d=1;d<=dias;d++){
     const contas=mapa[d]||[];
     const isH=ehHoje&&d===hoje;
     cal+=`<div class="ck-day ${isH?'hoje':''}"><div class="ck-day-num">${d}</div>${contas.map(c=>{
+      const ok=getCkStatus(c.id);
       let cls='ck-event';
-      if(c.ok)cls+=' pago';
+      if(ok)cls+=' pago';
       else if(ehHoje&&d<hoje)cls+=' vencido';
       else if(ehHoje&&d-hoje<=5)cls+=' em-breve';
-      return `<div class="${cls}" onclick="tglCk(${c.id})" title="${c.desc}: ${fmt(c.val)}">${c.desc}</div>`;
+      return `<div class="${cls}" onclick="tglCk(${c.id})" title="${c.desc}">${c.desc}</div>`;
     }).join('')}</div>`;
   }
   document.getElementById('ck-cal').innerHTML=cal;
   const sorted=[...S.cks].sort((a,b)=>a.venc-b.venc);
+  let totPg=0, totGeral=0;
   document.getElementById('ck-list').innerHTML=sorted.map(c=>{
+    const ok=getCkStatus(c.id);
+    const ehCartao=isCartaoCk(c.desc);
+    const valCartao=ehCartao?getCkValCartao(c.id):'';
+    const valExib=ehCartao?(valCartao!==''?parseFloat(valCartao):0):c.val;
+    totGeral+=ehCartao?(valCartao!==''?parseFloat(valCartao)||0:0):c.val;
+    if(ok) totPg+=valExib;
     let badge='';
-    if(c.ok)badge='<span class="badge b-pago">pago</span>';
+    if(ok)badge='<span class="badge b-pago">pago</span>';
     else if(ehHoje&&c.venc<hoje)badge='<span class="badge b-venc">vencida</span>';
     else if(ehHoje&&c.venc-hoje<=5)badge='<span class="badge b-soon">em breve</span>';
     else badge='<span class="badge b-ok">ok</span>';
-    return `<div class="row"><div class="row-l"><div class="ckb" onclick="tglCk(${c.id})" style="width:18px;height:18px;border-radius:4px;border:1.5px solid var(--border2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;${c.ok?'background:var(--green);border-color:var(--green);color:#fff':''}">${c.ok?'✓':''}</div><div><div class="r-name" style="${c.ok?'text-decoration:line-through;opacity:.4':''}">${c.desc}</div><div class="r-meta" style="display:flex;align-items:center;gap:4px">Dia <input type="number" min="1" max="31" value="${c.venc}" onchange="updCkVenc(${c.id},this.value)" style="width:36px;background:none;border:none;border-bottom:1px solid var(--border2);font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);outline:none;padding:0;text-align:center"> · ${c.comp==='anterior'?'Mês anterior':'Mês corrente'}</div></div></div><div class="row-r">${badge}<span class="r-val">${fmt(c.val)}</span><button class="del-btn" onclick="delCk(${c.id})">✕</button></div></div>`;
+    const valHtml = ehCartao
+      ? `<input type="number" step="0.01" placeholder="Valor" value="${valCartao}" 
+           onchange="setCkValCartao(${c.id},this.value);rCk()"
+           style="width:90px;background:none;border:none;border-bottom:1px solid var(--border2);font-family:'DM Mono',monospace;font-size:13px;font-weight:600;color:var(--red);outline:none;padding:0;text-align:right">`
+      : `<span class="r-val">${fmt(c.val)}</span>`;
+    return `<div class="row"><div class="row-l"><div class="ckb" onclick="tglCk(${c.id})" style="width:18px;height:18px;border-radius:4px;border:1.5px solid var(--border2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;${ok?'background:var(--green);border-color:var(--green);color:#fff':''}">${ok?'✓':''}</div><div><div class="r-name" style="${ok?'text-decoration:line-through;opacity:.4':''}">${c.desc}${ehCartao?'<span style="font-size:9px;color:var(--muted);margin-left:4px;font-family:DM Mono,monospace">cartão</span>':''}</div><div class="r-meta" style="display:flex;align-items:center;gap:4px">Dia <input type="number" min="1" max="31" value="${c.venc}" onchange="updCkVenc(${c.id},this.value)" style="width:36px;background:none;border:none;border-bottom:1px solid var(--border2);font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);outline:none;padding:0;text-align:center"> · ${c.comp==='anterior'?'Mês anterior':'Mês corrente'}</div></div></div><div class="row-r">${badge}${valHtml}<button class="del-btn" onclick="delCk(${c.id})">✕</button></div></div>`;
   }).join('');
-  const tot=S.cks.reduce((a,c)=>a+(c.val||0),0);
-  const pg=S.cks.filter(c=>c.ok).reduce((a,c)=>a+(c.val||0),0);
-  const pct=tot>0?Math.round((pg/tot)*100):0;
-  document.getElementById('ck-ap').textContent=fmt(tot-pg);
-  document.getElementById('ck-pg').textContent=fmt(pg);
+  const pct=totGeral>0?Math.round((totPg/totGeral)*100):0;
+  const nOk=S.cks.filter(c=>getCkStatus(c.id)).length;
+  document.getElementById('ck-ap').textContent=fmt(totGeral-totPg);
+  document.getElementById('ck-pg').textContent=fmt(totPg);
   document.getElementById('ck-pct-lbl').textContent=pct+'% pago';
-  document.getElementById('ck-n').textContent=S.cks.filter(c=>c.ok).length+'/'+S.cks.length;
+  document.getElementById('ck-n').textContent=nOk+'/'+S.cks.length;
   document.getElementById('ck-prog').style.width=pct+'%';
   const renda=S.renda.t+S.renda.n+(S.renda.e||0);
-  const sf=renda-tot;
+  const sf=renda-totGeral;
   const el=document.getElementById('ck-saldo');el.textContent=fmt(Math.abs(sf));el.style.color=sf>=0?'var(--green)':'var(--red)';
 }
-function tglCk(id){const c=S.cks.find(c=>c.id===id);if(c){c.ok=!c.ok;persist();rCk();}}
+function tglCk(id){
+  const novoOk=!getCkStatus(id);
+  setCkStatus(id,novoOk);
+  rCk();
+}
 function delCk(id){S.cks=S.cks.filter(c=>c.id!==id);persist();rCk();}
 function updCkVenc(id,v){const c=S.cks.find(c=>c.id===id);if(c){c.venc=parseInt(v)||c.venc;persist();rCk();}}
 
@@ -2531,7 +2589,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, set, onValue, get } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
 (function(){
-  const FB_VERSION = '2026-07-v19';
+  const FB_VERSION = '2026-07-v20';
   const fbConfig = {
     apiKey: "AIzaSyCPvz65aVIn9lxIALc4BcOY20PevqXStVA",
     authDomain: "app-financeiro-6fad9.firebaseapp.com",
