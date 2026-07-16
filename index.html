@@ -239,6 +239,7 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
     <div class="ni" onclick="goTo(this,'terc')"><span class="ic">👥</span> Gastos de Terceiros</div>
     <div class="ni" onclick="goTo(this,'cartao')"><span class="ic">💳</span> Visão por Cartão</div>
     <div class="ns">Análise</div>
+    <div class="ni" onclick="goTo(this,'saude')"><span class="ic">💊</span> Saúde Financeira</div>
     <div class="ni" onclick="goTo(this,'cat')"><span class="ic">◎</span> Categorias</div>
     <div class="ni" onclick="goTo(this,'ag')"><span class="ic">▤</span> Acomp. Geral</div>
     <div class="ns">Configurações</div>
@@ -467,6 +468,45 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
       </div>
     </div>
 
+    <!-- SAÚDE FINANCEIRA -->
+    <div id="v-saude" class="view">
+
+      <!-- Orçamento por Categoria -->
+      <div class="card" style="margin-bottom:16px">
+        <div class="sh"><span class="sh-t">🎯 Orçamento por Categoria</span><button class="sh-btn" onclick="openM('meta-add')">+ Meta</button></div>
+        <div id="saude-metas"></div>
+      </div>
+
+      <!-- Projeção 6 meses -->
+      <div class="card" style="margin-bottom:16px">
+        <div class="sh"><span class="sh-t">📈 Projeção dos Próximos Meses</span></div>
+        <div id="saude-projecao"></div>
+      </div>
+
+      <!-- Termômetro de Dívidas -->
+      <div class="card" style="margin-bottom:16px">
+        <div class="sh"><span class="sh-t">🌡️ Termômetro de Dívidas</span></div>
+        <div id="saude-dividas"></div>
+      </div>
+
+      <!-- Reserva de Emergência -->
+      <div class="card" style="margin-bottom:16px">
+        <div class="sh"><span class="sh-t">🏦 Reserva de Emergência</span></div>
+        <div id="saude-reserva"></div>
+        <div style="margin-top:12px;display:flex;gap:10px;align-items:flex-end">
+          <div class="fg" style="flex:1"><label class="flbl">Meta (R$)</label>
+            <input class="fi-inp" type="number" id="res-meta" placeholder="10000" onchange="salvarReserva()">
+          </div>
+          <div class="fg" style="flex:1"><label class="flbl">Guardado até hoje (R$)</label>
+            <input class="fi-inp" type="number" id="res-acum" placeholder="0" onchange="salvarReserva()">
+          </div>
+          <div class="fg" style="flex:1"><label class="flbl">Guardar/mês (R$)</label>
+            <input class="fi-inp" type="number" id="res-mensal" placeholder="500" onchange="salvarReserva()">
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- CONFIG CATEGORIAS -->
     <div id="v-cfg-cats" class="view">
       <div class="card" style="margin-bottom:16px">
@@ -511,7 +551,17 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
       </div>
     </div>
 
-    <!-- ACOMP GERAL -->
+    <!-- MODAL META -->
+<div class="overlay" id="m-meta-add">
+  <div class="modal">
+    <div class="mh"><span class="mh-t">Nova Meta de Categoria</span><button class="mh-x" onclick="closeM('meta-add')">✕</button></div>
+    <div class="fg"><label class="flbl">Categoria</label><select class="fsel" id="meta-cat"></select></div>
+    <div class="fg"><label class="flbl">Limite mensal (R$)</label><input class="fi-inp" type="number" id="meta-val" placeholder="500" step="50"></div>
+    <div class="mfoot"><button class="btn btn-s" onclick="closeM('meta-add')">Cancelar</button><button class="btn btn-p" onclick="saveMeta()">Salvar</button></div>
+  </div>
+</div>
+
+<!-- ACOMP GERAL -->
     <div id="v-ag" class="view">
       <div class="card" style="overflow-x:auto">
         <div class="sh"><span class="sh-t">Acompanhamento Geral — 2026/2027</span>
@@ -765,7 +815,7 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
 </div>
 
 <script>
-const DATA_VERSION = '2026-07-v28';
+const DATA_VERSION = '2026-07-v30';
 
 
 const MNS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
@@ -1104,7 +1154,7 @@ async function carregarCatsFirebase() {
   buildAllCartSelects();
 }
 
-const TITLES = {dash:'Visão Geral',gastos:'Gastos do Mês',ck:'Checklist de Pagamentos',sem:'Gastos Semanais',fixos:'Gastos Fixos',emp:'Empréstimos e Financiamentos',parc:'Parcelas',terc:'Gastos de Terceiros',cat:'Categorias',ag:'Acompanhamento Geral',cartao:'Visão por Cartão','cfg-cats':'Gerenciar Categorias'};
+const TITLES = {dash:'Visão Geral',gastos:'Gastos do Mês',ck:'Checklist de Pagamentos',sem:'Gastos Semanais',fixos:'Gastos Fixos',emp:'Empréstimos e Financiamentos',parc:'Parcelas',terc:'Gastos de Terceiros',cat:'Categorias',ag:'Acompanhamento Geral',cartao:'Visão por Cartão','cfg-cats':'Gerenciar Categorias','saude':'Saúde Financeira'};
 let CM=6, CY=2026, CW=1;
 
 function showSyncStatus(ok) {
@@ -1152,7 +1202,7 @@ function fd(s){if(!s)return'';const[y,m,d]=s.split('-');return d+'/'+m;}
 // ── UTILS ─────────────────────────────────────────────────────────────────────
 function ld(k,d){
   if(localStorage.getItem('data_version')!==DATA_VERSION){
-    ['renda','gastos','fixosCart','fixosConta','emprestimos','parcs','cks','tercParcs','tercGastos','metas'].forEach(k=>localStorage.removeItem(k));
+    ['renda','gastos','fixosCart','fixosConta','emprestimos','parcs','cks','tercParcs','tercGastos','metas','reserva'].forEach(k=>localStorage.removeItem(k));
     localStorage.setItem('data_version',DATA_VERSION);
   }
   try{const v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch{return d;}
@@ -1267,70 +1317,55 @@ let S = {
     {id:3,nome:'Consignado',parcela:3516.02,finalidade:'Fixo',tipo:'Casa',parcAtual:23,parcTotal:144,consignado:true}
   ]),
   parcs: ld('parcs', [
-    {id:1,desc:'Sofá',cart:'BRB Black',valParc:290.0,qtdTotal:7,qtdRestante:6,mesCompra:6,mesInicio:7,anoInicio:2026},
-    {id:2,desc:'Festa Juju',cart:'BRB Black',valParc:210.0,qtdTotal:9,qtdRestante:8,mesCompra:6,mesInicio:7,anoInicio:2026},
-    {id:3,desc:'Farmácia',cart:'BRB Black',valParc:293.27,qtdTotal:2,qtdRestante:1,mesCompra:6,mesInicio:7,anoInicio:2026},
-    {id:4,desc:'Vestido Nataly',cart:'BRB Black',valParc:47.97,qtdTotal:2,qtdRestante:1,mesCompra:6,mesInicio:7,anoInicio:2026},
-    {id:5,desc:'Shopee',cart:'BRB Black',valParc:52.17,qtdTotal:3,qtdRestante:2,mesCompra:6,mesInicio:7,anoInicio:2026},
-    {id:6,desc:'C&A',cart:'BRB Black',valParc:56.66,qtdTotal:3,qtdRestante:2,mesCompra:6,mesInicio:7,anoInicio:2026},
-    {id:7,desc:'Rosário',cart:'BRB Black',valParc:97.45,qtdTotal:2,qtdRestante:1,mesCompra:6,mesInicio:7,anoInicio:2026},
-    {id:8,desc:'Morana',cart:'BRB Black',valParc:62.44,qtdTotal:4,qtdRestante:3,mesCompra:6,mesInicio:7,anoInicio:2026},
-    {id:9,desc:'C&A',cart:'BRB Black',valParc:55.0,qtdTotal:2,qtdRestante:1,mesCompra:6,mesInicio:7,anoInicio:2026},
-    {id:10,desc:'Rosário',cart:'BRB Black',valParc:122.12,qtdTotal:2,qtdRestante:1,mesCompra:6,mesInicio:7,anoInicio:2026},
-    {id:11,desc:'Pulseira',cart:'BRB Black',valParc:60.8,qtdTotal:5,qtdRestante:4,mesCompra:6,mesInicio:7,anoInicio:2026},
-    {id:12,desc:'Farmácia',cart:'BRB Black',valParc:293.27,qtdTotal:3,qtdRestante:2,mesCompra:6,mesInicio:7,anoInicio:2026},
-    {id:13,desc:'Material Ju',cart:'BRB Black',valParc:135.0,qtdTotal:6,qtdRestante:5,mesCompra:6,mesInicio:7,anoInicio:2026},
-    {id:14,desc:'Tauá',cart:'BRB Black',valParc:66.91,qtdTotal:9,qtdRestante:8,mesCompra:6,mesInicio:7,anoInicio:2026},
-    {id:15,desc:'Rosário',cart:'BRB Black',valParc:300.57,qtdTotal:4,qtdRestante:3,mesCompra:6,mesInicio:7,anoInicio:2026},
-    {id:16,desc:'Cama Ju',cart:'Mercado Pago',valParc:150.0,qtdTotal:16,qtdRestante:15,mesCompra:6,mesInicio:7,anoInicio:2026},
-    {id:17,desc:'Notebook',cart:'BRB Black',valParc:267.13,qtdTotal:3,qtdRestante:2,mesCompra:6,mesInicio:7,anoInicio:2026},
-    {id:18,desc:'Melissa Ju',cart:'BRB Black',valParc:36.15,qtdTotal:2,qtdRestante:1,mesCompra:6,mesInicio:7,anoInicio:2026},
-    {id:19,desc:'Shein',cart:'BRB Black',valParc:50.09,qtdTotal:5,qtdRestante:4,mesCompra:6,mesInicio:7,anoInicio:2026},
-    {id:20,desc:'C&A',cart:'Nubank',valParc:50.0,qtdTotal:2,qtdRestante:1,mesCompra:6,mesInicio:7,anoInicio:2026},
-    {id:21,desc:'Duo Gourmet',cart:'Inter',valParc:60.0,qtdTotal:2,qtdRestante:1,mesCompra:6,mesInicio:7,anoInicio:2026},
-    {id:22,desc:'Tenis',cart:'Mercado Pago',valParc:30.56,qtdTotal:4,qtdRestante:3,mesCompra:6,mesInicio:7,anoInicio:2026},
-    {id:23,desc:'Fone',cart:'Mercado Pago',valParc:17.0,qtdTotal:3,qtdRestante:2,mesCompra:6,mesInicio:7,anoInicio:2026},
-    {id:24,desc:'Terno',cart:'Mercado Pago',valParc:22.84,qtdTotal:2,qtdRestante:1,mesCompra:6,mesInicio:7,anoInicio:2026},
-    {id:25,desc:'Potes',cart:'Mercado Pago',valParc:46.29,qtdTotal:2,qtdRestante:1,mesCompra:6,mesInicio:7,anoInicio:2026},
-    {id:26,desc:'Tenis',cart:'Mercado Pago',valParc:29.26,qtdTotal:6,qtdRestante:5,mesCompra:6,mesInicio:7,anoInicio:2026},
-    {id:27,desc:'Tinta quarto',cart:'Mercado Pago',valParc:58.45,qtdTotal:3,qtdRestante:2,mesCompra:6,mesInicio:7,anoInicio:2026},
-    {id:28,desc:'Shopee',cart:'BRB Black',valParc:54.82,qtdTotal:6,qtdRestante:5,mesCompra:6,mesInicio:7,anoInicio:2026},
-    {id:29,desc:'Prateleiras',cart:'Mercado Pago',valParc:120.45,qtdTotal:6,qtdRestante:5,mesCompra:6,mesInicio:7,anoInicio:2026},
-    {id:30,desc:'Roteador',cart:'Mercado Pago',valParc:35.74,qtdTotal:2,qtdRestante:1,mesCompra:6,mesInicio:7,anoInicio:2026},
-    {id:31,desc:'IBEP',cart:'Itaú Azul',valParc:38.9,qtdTotal:2,qtdRestante:1,mesCompra:6,mesInicio:7,anoInicio:2026},
-    {id:32,desc:'Viagem Porto de galinhas',cart:'Itaú Azul',valParc:464.62,qtdTotal:2,qtdRestante:1,mesCompra:6,mesInicio:7,anoInicio:2026},
-    {id:33,desc:'Mecânico',cart:'BRB Black',valParc:600.0,qtdTotal:2,qtdRestante:1,mesCompra:6,mesInicio:7,anoInicio:2026},
-    {id:34,desc:'Cirurgia Ju',cart:'BRB Black',valParc:4950.0,qtdTotal:2,qtdRestante:1,mesCompra:6,mesInicio:7,anoInicio:2026},
-    {id:35,desc:'Carrinho Quarto',cart:'BRB Black',valParc:66.0,qtdTotal:2,qtdRestante:1,mesCompra:6,mesInicio:7,anoInicio:2026},
-    {id:36,desc:'Maquiagem',cart:'Itaú Azul',valParc:34.8,qtdTotal:4,qtdRestante:3,mesCompra:6,mesInicio:7,anoInicio:2026},
-    {id:37,desc:'Roupa ensaio',cart:'BRB Black',valParc:73.33,qtdTotal:3,qtdRestante:2,mesCompra:6,mesInicio:7,anoInicio:2026},
-    {id:38,desc:'Shein',cart:'BRB Black',valParc:80.02,qtdTotal:5,qtdRestante:5,mesCompra:7,mesInicio:8,anoInicio:2026},
-    {id:39,desc:'Shein 2',cart:'BRB Black',valParc:58.28,qtdTotal:5,qtdRestante:5,mesCompra:7,mesInicio:8,anoInicio:2026},
-    {id:40,desc:'Garrafa',cart:'BRB Black',valParc:43.31,qtdTotal:3,qtdRestante:3,mesCompra:7,mesInicio:8,anoInicio:2026},
-    {id:41,desc:'Remédios Nataly',cart:'BRB Black',valParc:329.75,qtdTotal:3,qtdRestante:3,mesCompra:7,mesInicio:8,anoInicio:2026},
-    {id:42,desc:'Obra',cart:'BRB Black',valParc:56.0,qtdTotal:4,qtdRestante:3,mesCompra:6,mesInicio:7,anoInicio:2026},
-    {id:43,desc:'Vestido Nataly',cart:'Mercado Pago',valParc:17.21,qtdTotal:5,qtdRestante:4,mesCompra:6,mesInicio:7,anoInicio:2026},
-    {id:44,desc:'Obra quarto',cart:'Mercado Pago',valParc:97.36,qtdTotal:2,qtdRestante:1,mesCompra:6,mesInicio:7,anoInicio:2026},
-    {id:45,desc:'Obra quarto',cart:'Mercado Pago',valParc:23.07,qtdTotal:6,qtdRestante:5,mesCompra:6,mesInicio:7,anoInicio:2026},
-    {id:46,desc:'Shopee',cart:'BRB Black',valParc:272.82,qtdTotal:2,qtdRestante:2,mesCompra:7,mesInicio:8,anoInicio:2026},
-    {id:47,desc:'Mercado Livre',cart:'BRB Black',valParc:52.66,qtdTotal:10,qtdRestante:10,mesCompra:7,mesInicio:8,anoInicio:2026},
-    {id:48,desc:'Capa de carrinho',cart:'BRB Black',valParc:101.7,qtdTotal:6,qtdRestante:6,mesCompra:7,mesInicio:8,anoInicio:2026},
-    {id:49,desc:'Trape zape',cart:'BRB Black',valParc:113.0,qtdTotal:3,qtdRestante:3,mesCompra:7,mesInicio:8,anoInicio:2026},
-    {id:50,desc:'Cadernetas',cart:'BRB Black',valParc:41.36,qtdTotal:2,qtdRestante:2,mesCompra:7,mesInicio:8,anoInicio:2026},
-    {id:51,desc:'Bolsa carro',cart:'BRB Black',valParc:23.12,qtdTotal:2,qtdRestante:2,mesCompra:7,mesInicio:8,anoInicio:2026},
-    {id:52,desc:'Camisa Social',cart:'BRB Black',valParc:32.3,qtdTotal:2,qtdRestante:2,mesCompra:7,mesInicio:8,anoInicio:2026},
-    {id:53,desc:'Shopee',cart:'BRB Black',valParc:63.68,qtdTotal:3,qtdRestante:2,mesCompra:7,mesInicio:8,anoInicio:2026},
-    {id:54,desc:'Shopee',cart:'BRB Black',valParc:169.81,qtdTotal:2,qtdRestante:1,mesCompra:7,mesInicio:8,anoInicio:2026},
-    {id:55,desc:'Shein',cart:'BRB Black',valParc:185.92,qtdTotal:5,qtdRestante:4,mesCompra:7,mesInicio:8,anoInicio:2026},
-    {id:56,desc:'Mercado Livre',cart:'BRB Black',valParc:36.6,qtdTotal:5,qtdRestante:4,mesCompra:7,mesInicio:8,anoInicio:2026},
-    {id:57,desc:'ML',cart:'BRB Black',valParc:70.87,qtdTotal:2,qtdRestante:1,mesCompra:7,mesInicio:8,anoInicio:2026},
-    {id:58,desc:'ML',cart:'BRB Black',valParc:10.14,qtdTotal:8,qtdRestante:7,mesCompra:7,mesInicio:8,anoInicio:2026},
-    {id:59,desc:'ML',cart:'BRB Black',valParc:8.16,qtdTotal:6,qtdRestante:5,mesCompra:7,mesInicio:8,anoInicio:2026},
-    {id:60,desc:'ML',cart:'BRB Black',valParc:3.82,qtdTotal:2,qtdRestante:1,mesCompra:7,mesInicio:8,anoInicio:2026},
-    {id:61,desc:'ML',cart:'BRB Black',valParc:87.54,qtdTotal:2,qtdRestante:1,mesCompra:7,mesInicio:8,anoInicio:2026},
-    {id:62,desc:'Macacão Sofia',cart:'BRB Black',valParc:83.34,qtdTotal:3,qtdRestante:3,mesCompra:8,mesInicio:9,anoInicio:2026},
-    {id:63,desc:'Rosário',cart:'BRB Black',valParc:73.17,qtdTotal:2,qtdRestante:2,mesCompra:8,mesInicio:9,anoInicio:2026},
-    {id:64,desc:'Shopee',cart:'BRB Black',valParc:52.9,qtdTotal:2,qtdRestante:2,mesCompra:8,mesInicio:9,anoInicio:2026}
+    {id:1,desc:'Sofá',cart:'BRB Black',valParc:290.0,qtdTotal:7,qtdRestante:5,mesCompra:6,mesInicio:7,anoInicio:2026},
+    {id:2,desc:'Festa Juju',cart:'BRB Black',valParc:210.0,qtdTotal:9,qtdRestante:7,mesCompra:6,mesInicio:7,anoInicio:2026},
+    {id:3,desc:'Shopee',cart:'BRB Black',valParc:52.17,qtdTotal:3,qtdRestante:1,mesCompra:6,mesInicio:7,anoInicio:2026},
+    {id:4,desc:'C&A',cart:'BRB Black',valParc:56.66,qtdTotal:3,qtdRestante:1,mesCompra:6,mesInicio:7,anoInicio:2026},
+    {id:5,desc:'Morana',cart:'BRB Black',valParc:62.44,qtdTotal:4,qtdRestante:2,mesCompra:6,mesInicio:7,anoInicio:2026},
+    {id:6,desc:'Pulseira',cart:'BRB Black',valParc:60.8,qtdTotal:5,qtdRestante:3,mesCompra:6,mesInicio:7,anoInicio:2026},
+    {id:7,desc:'Farmácia',cart:'BRB Black',valParc:293.27,qtdTotal:3,qtdRestante:1,mesCompra:6,mesInicio:7,anoInicio:2026},
+    {id:8,desc:'Material Ju',cart:'BRB Black',valParc:135.0,qtdTotal:6,qtdRestante:4,mesCompra:6,mesInicio:7,anoInicio:2026},
+    {id:9,desc:'Tauá',cart:'BRB Black',valParc:66.91,qtdTotal:9,qtdRestante:7,mesCompra:6,mesInicio:7,anoInicio:2026},
+    {id:10,desc:'Rosário',cart:'BRB Black',valParc:300.57,qtdTotal:4,qtdRestante:2,mesCompra:6,mesInicio:7,anoInicio:2026},
+    {id:11,desc:'Cama Ju',cart:'Mercado Pago',valParc:150.0,qtdTotal:16,qtdRestante:14,mesCompra:6,mesInicio:7,anoInicio:2026},
+    {id:12,desc:'Notebook',cart:'BRB Black',valParc:267.13,qtdTotal:3,qtdRestante:1,mesCompra:6,mesInicio:7,anoInicio:2026},
+    {id:13,desc:'Shein',cart:'BRB Black',valParc:50.09,qtdTotal:5,qtdRestante:3,mesCompra:6,mesInicio:7,anoInicio:2026},
+    {id:14,desc:'Tenis',cart:'Mercado Pago',valParc:30.56,qtdTotal:4,qtdRestante:2,mesCompra:6,mesInicio:7,anoInicio:2026},
+    {id:15,desc:'Fone',cart:'Mercado Pago',valParc:17.0,qtdTotal:3,qtdRestante:1,mesCompra:6,mesInicio:7,anoInicio:2026},
+    {id:16,desc:'Tenis',cart:'Mercado Pago',valParc:29.26,qtdTotal:6,qtdRestante:4,mesCompra:6,mesInicio:7,anoInicio:2026},
+    {id:17,desc:'Tinta quarto',cart:'Mercado Pago',valParc:58.45,qtdTotal:3,qtdRestante:1,mesCompra:6,mesInicio:7,anoInicio:2026},
+    {id:18,desc:'Shopee',cart:'BRB Black',valParc:54.82,qtdTotal:6,qtdRestante:4,mesCompra:6,mesInicio:7,anoInicio:2026},
+    {id:19,desc:'Prateleiras',cart:'Mercado Pago',valParc:120.45,qtdTotal:6,qtdRestante:4,mesCompra:6,mesInicio:7,anoInicio:2026},
+    {id:20,desc:'Maquiagem',cart:'Itaú Azul',valParc:34.8,qtdTotal:4,qtdRestante:2,mesCompra:6,mesInicio:7,anoInicio:2026},
+    {id:21,desc:'Roupa ensaio',cart:'BRB Black',valParc:73.33,qtdTotal:3,qtdRestante:1,mesCompra:6,mesInicio:7,anoInicio:2026},
+    {id:22,desc:'Shein',cart:'BRB Black',valParc:80.02,qtdTotal:5,qtdRestante:4,mesCompra:7,mesInicio:8,anoInicio:2026},
+    {id:23,desc:'Shein 2',cart:'BRB Black',valParc:58.28,qtdTotal:5,qtdRestante:4,mesCompra:7,mesInicio:8,anoInicio:2026},
+    {id:24,desc:'Garrafa',cart:'BRB Black',valParc:43.31,qtdTotal:3,qtdRestante:2,mesCompra:7,mesInicio:8,anoInicio:2026},
+    {id:25,desc:'Remédios Nataly',cart:'BRB Black',valParc:329.75,qtdTotal:3,qtdRestante:2,mesCompra:7,mesInicio:8,anoInicio:2026},
+    {id:26,desc:'Obra',cart:'BRB Black',valParc:56.0,qtdTotal:4,qtdRestante:2,mesCompra:6,mesInicio:7,anoInicio:2026},
+    {id:27,desc:'Vestido Nataly',cart:'Mercado Pago',valParc:17.21,qtdTotal:5,qtdRestante:3,mesCompra:6,mesInicio:7,anoInicio:2026},
+    {id:28,desc:'Obra quarto',cart:'Mercado Pago',valParc:23.07,qtdTotal:6,qtdRestante:4,mesCompra:6,mesInicio:7,anoInicio:2026},
+    {id:29,desc:'Shopee',cart:'BRB Black',valParc:272.82,qtdTotal:2,qtdRestante:1,mesCompra:7,mesInicio:8,anoInicio:2026},
+    {id:30,desc:'Mercado Livre',cart:'BRB Black',valParc:52.66,qtdTotal:10,qtdRestante:9,mesCompra:7,mesInicio:8,anoInicio:2026},
+    {id:31,desc:'Capa de carrinho',cart:'BRB Black',valParc:101.7,qtdTotal:6,qtdRestante:5,mesCompra:7,mesInicio:8,anoInicio:2026},
+    {id:32,desc:'Trape zape',cart:'BRB Black',valParc:113.0,qtdTotal:3,qtdRestante:2,mesCompra:7,mesInicio:8,anoInicio:2026},
+    {id:33,desc:'Cadernetas',cart:'BRB Black',valParc:41.36,qtdTotal:2,qtdRestante:1,mesCompra:7,mesInicio:8,anoInicio:2026},
+    {id:34,desc:'Bolsa carro',cart:'BRB Black',valParc:23.12,qtdTotal:2,qtdRestante:1,mesCompra:7,mesInicio:8,anoInicio:2026},
+    {id:35,desc:'Camisa Social',cart:'BRB Black',valParc:32.3,qtdTotal:2,qtdRestante:1,mesCompra:7,mesInicio:8,anoInicio:2026},
+    {id:36,desc:'Shopee',cart:'BRB Black',valParc:63.68,qtdTotal:3,qtdRestante:2,mesCompra:7,mesInicio:8,anoInicio:2026},
+    {id:37,desc:'Shopee',cart:'BRB Black',valParc:169.81,qtdTotal:2,qtdRestante:1,mesCompra:7,mesInicio:8,anoInicio:2026},
+    {id:38,desc:'Shein',cart:'BRB Black',valParc:185.92,qtdTotal:5,qtdRestante:4,mesCompra:7,mesInicio:8,anoInicio:2026},
+    {id:39,desc:'Mercado Livre',cart:'BRB Black',valParc:36.6,qtdTotal:5,qtdRestante:4,mesCompra:7,mesInicio:8,anoInicio:2026},
+    {id:40,desc:'ML',cart:'BRB Black',valParc:70.87,qtdTotal:2,qtdRestante:1,mesCompra:7,mesInicio:8,anoInicio:2026},
+    {id:41,desc:'ML',cart:'BRB Black',valParc:10.14,qtdTotal:8,qtdRestante:7,mesCompra:7,mesInicio:8,anoInicio:2026},
+    {id:42,desc:'ML',cart:'BRB Black',valParc:8.16,qtdTotal:6,qtdRestante:5,mesCompra:7,mesInicio:8,anoInicio:2026},
+    {id:43,desc:'ML',cart:'BRB Black',valParc:3.82,qtdTotal:2,qtdRestante:1,mesCompra:7,mesInicio:8,anoInicio:2026},
+    {id:44,desc:'ML',cart:'BRB Black',valParc:87.54,qtdTotal:2,qtdRestante:1,mesCompra:7,mesInicio:8,anoInicio:2026},
+    {id:45,desc:'Macacão Sofia',cart:'BRB Black',valParc:83.34,qtdTotal:3,qtdRestante:3,mesCompra:8,mesInicio:9,anoInicio:2026},
+    {id:46,desc:'Rosário',cart:'BRB Black',valParc:73.17,qtdTotal:2,qtdRestante:2,mesCompra:8,mesInicio:9,anoInicio:2026},
+    {id:47,desc:'Shopee',cart:'BRB Black',valParc:52.9,qtdTotal:2,qtdRestante:2,mesCompra:8,mesInicio:9,anoInicio:2026},
+    {id:48,desc:'Shopee',cart:'BRB Black',valParc:80.18,qtdTotal:3,qtdRestante:3,mesCompra:8,mesInicio:9,anoInicio:2026},
+    {id:49,desc:'Shopee',cart:'BRB Black',valParc:25.68,qtdTotal:2,qtdRestante:2,mesCompra:8,mesInicio:9,anoInicio:2026}
   ]),
   cks: ld('cks', [
     {id:1,desc:'Condomínio',venc:5,comp:'corrente',val:680,ok:false},
@@ -1365,15 +1400,23 @@ let S = {
   tercGastos: ld('tercGastos', []),
   rendaExtra: ld('rendaExtra', []),
   // [{id, desc, val, tipo:'mensal'|'unico', mes:null|7..12}]
+  metas: ld('metas', [
+    {id:1,cat:'alimentacao',limite:1200},
+    {id:2,cat:'supermercado',limite:800},
+    {id:3,cat:'combustivel',limite:500},
+    {id:4,cat:'diversao',limite:300}
+  ]),
+  reserva: ld('reserva', {meta:10000,acumulado:0})
 };
 function persist(){
-  ['renda','gastos','fixosCart','fixosConta','emprestimos','parcs','cks','tercParcs','tercGastos','rendaExtra'].forEach(k=>sv(k,S[k]));
+  ['renda','gastos','fixosCart','fixosConta','emprestimos','parcs','cks','tercParcs','tercGastos','rendaExtra','metas','reserva'].forEach(k=>sv(k,S[k]));
   if(typeof pushToFirebase === 'function') pushToFirebase();
 }
 
 // ── NAVEGAÇÃO ─────────────────────────────────────────────────────────────────
 function goTo(el,v){
   if(v==='cfg-cats') { setTimeout(()=>rCfgCats(),50); }
+  if(v==='saude') { setTimeout(()=>rSaude(),50); }
   document.querySelectorAll('.ni').forEach(n=>n.classList.remove('on'));
   if(el)el.classList.add('on');
   document.querySelectorAll('.view').forEach(x=>x.classList.remove('on'));
@@ -2389,6 +2432,9 @@ function fecharCatDet(){document.getElementById('cat-detalhe').style.display='no
 let fixoMeio='cartao';
 function openM(id,sub){
   const today=new Date().toISOString().split('T')[0];
+  if(id==='meta-add'){
+    buildCatSelect('meta-cat');
+  }
   if(id==='parc-add'){
     // Pré-seleciona o mês atual de competência
     const selMes = document.getElementById('pa-mes');
@@ -2526,6 +2572,27 @@ function saveParc(eNovo){
     const ts=dup.createdAt?(' (incluída '+fmtTs(dup.createdAt)+')'):' ';
     if(!confirm('⚠️ Possível duplicata'+ts+'\n\n"'+desc+'" · '+fmt(valParc)+'/mês · '+cartVal+'\n\nEssa parcela já foi registrada. Deseja incluir mesmo assim?')) return;
   }
+  // Alerta de impacto antes de incluir
+  const rendaBase=S.renda.t+S.renda.n;
+  const tFixBase=S.fixosCart.filter(f=>!f.descontadoFolha).reduce((a,f)=>a+(f.val||0),0)+
+                 S.fixosConta.filter(f=>!f.descontadoFolha).reduce((a,f)=>a+(f.val||0),0)+
+                 S.emprestimos.filter(e=>!e.consignado).reduce((a,e)=>a+(e.parcela||0),0);
+  const tParcsBase=S.parcs.reduce((a,p)=>{
+    if(!p.mesInicio)return a;
+    return mesI>=p.mesInicio&&mesI<=p.mesInicio+p.qtdTotal-1?a+(p.valParc||0):a;
+  },0);
+  const saldoAntes=rendaBase-tFixBase-tParcsBase;
+  const saldoDepois=saldoAntes-valParc;
+  const mNome=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'][(mesI-1)%12]+'/'+( mesI<=12?'26':'27');
+  if(!confirm(
+    'Impacto desta parcela:\n\n'+
+    '💳 '+desc+': '+fmt(valParc)+'/mês × '+n+'x = '+fmt(valParc*n)+' total\n'+
+    '📅 Início: '+mNome+'\n\n'+
+    'Saldo disponível em '+mNome+':\n'+
+    'Antes: '+fmt(saldoAntes)+'\n'+
+    'Depois: '+fmt(saldoDepois)+(saldoDepois<0?' ⚠️ NEGATIVO!':'')+'\n\n'+
+    'Confirma inclusão?'
+  ))return;
   S.parcs.push({id:nid(),desc,
     cart:cartVal,
     valParc,qtdTotal:n,qtdRestante:n,mesInicio:mesI,createdAt:Date.now()});
@@ -2575,6 +2642,213 @@ function onRendaTipoChange(){
   document.getElementById('re-mes-fim-wrap').style.display = tipo==='range' ? 'block' : 'none';
 }
 
+
+// ── SAÚDE FINANCEIRA ──────────────────────────────────────────────────────────
+function saveMeta(){
+  const cat=document.getElementById('meta-cat').value;
+  const limite=parseFloat(document.getElementById('meta-val').value)||0;
+  if(!cat||!limite)return;
+  if(!S.metas)S.metas=[];
+  const ex=S.metas.find(m=>m.cat===cat);
+  if(ex){ex.limite=limite;}else{S.metas.push({id:nid(),cat,limite});}
+  persist();closeM('meta-add');rSaude();toast('Meta salva!');
+}
+
+function updMetaLimite(id,val){
+  const m=S.metas.find(m=>m.id===id);
+  if(m){m.limite=parseFloat(val)||m.limite;persist();rSaude();}
+}
+function delMeta(id){
+  S.metas=S.metas.filter(m=>m.id!==id);
+  persist();rSaude();
+}
+
+function salvarReserva(){
+  const meta=parseFloat(document.getElementById('res-meta').value)||0;
+  const acumulado=parseFloat(document.getElementById('res-acum').value)||0;
+  const mensal=parseFloat(document.getElementById('res-mensal').value)||0;
+  if(!S.reserva)S.reserva={};
+  S.reserva.meta=meta;S.reserva.acumulado=acumulado;S.reserva.mensal=mensal;
+  persist();rSaude();
+}
+
+function rSaude(){
+  const m1=CM+1;
+  const ciclo=getCiclo(m1);
+  const gastosMes=ciclo?S.gastos.filter(g=>g.data>=ciclo.ini&&g.data<=ciclo.fim):[];
+  const rendaTotal=S.renda.t+S.renda.n+(S.renda.e||0);
+
+  // ── METAS ────────────────────────────────────────────────────────────────────
+  const metasEl=document.getElementById('saude-metas');
+  if(metasEl){
+    if(!S.metas||!S.metas.length){
+      metasEl.innerHTML='<div class="empty"><div class="eico">🎯</div>Nenhuma meta cadastrada. Clique em "+ Meta" para começar.</div>';
+    } else {
+      const alertas=[];
+      metasEl.innerHTML=S.metas.map(m=>{
+        const gasto=gastosMes.filter(g=>g.cat===m.cat).reduce((a,g)=>a+(g.val||0),0);
+        const pct=m.limite>0?Math.min((gasto/m.limite)*100,100):0;
+        const cor=pct>=100?'var(--red)':pct>=80?'#f59e0b':'var(--green)';
+        if(pct>=80)alertas.push({cat:m.cat,pct:pct.toFixed(0),gasto,limite:m.limite});
+        return `<div style="margin-bottom:14px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+            <span style="font-size:13px;font-weight:500">${getCatIco(m.cat)} ${getCatNome(m.cat)}</span>
+            <div style="display:flex;align-items:center;gap:6px">
+              <span style="font-family:'DM Mono',monospace;font-size:12px;color:${cor}">${fmt(gasto)} /</span>
+              <input type="number" value="${m.limite}" step="50" min="0"
+                onchange="updMetaLimite(${m.id},this.value)"
+                style="width:72px;background:none;border:none;border-bottom:1px solid var(--border2);font-family:'DM Mono',monospace;font-size:12px;color:var(--ink);outline:none;padding:0;text-align:right">
+              <button onclick="delMeta(${m.id})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:11px;margin-left:2px">✕</button>
+            </div>
+          </div>
+          <div style="background:var(--s2);border-radius:4px;height:8px;overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:${cor};border-radius:4px;transition:width .3s"></div>
+          </div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px;font-family:'DM Mono',monospace">
+            ${pct>=100?'⚠️ Limite ultrapassado!':pct>=80?'⚠️ '+pct.toFixed(0)+'% — próximo do limite':'Restam '+fmt(m.limite-gasto)}
+          </div>
+        </div>`;
+      }).join('');
+    }
+  }
+
+  // ── PROJEÇÃO 6 MESES ─────────────────────────────────────────────────────────
+  const projEl=document.getElementById('saude-projecao');
+  if(projEl){
+    const meses=[7,8,9,10,11,12,13,14,15,16,17,18];
+    const mlbls=['Jul/26','Ago/26','Set/26','Out/26','Nov/26','Dez/26','Jan/27','Fev/27','Mar/27','Abr/27','Mai/27','Jun/27'];
+    const renda=S.renda.t+S.renda.n;
+    const tFixCart=S.fixosCart.filter(f=>!f.descontadoFolha).reduce((a,f)=>a+(f.val||0),0);
+    const tFixConta=S.fixosConta.filter(f=>!f.descontadoFolha).reduce((a,f)=>a+(f.val||0),0);
+    const tEmp=S.emprestimos.filter(e=>!e.consignado).reduce((a,e)=>a+(e.parcela||0),0);
+    const mediaCicloAtual=gastosMes.reduce((a,g)=>a+(g.val||0),0)||3500;
+
+    const projs=meses.slice(0,6).map((m,i)=>{
+      const tParcs=S.parcs.reduce((a,p)=>{
+        if(!p.mesInicio)return a;
+        return m>=p.mesInicio&&m<=p.mesInicio+p.qtdTotal-1?a+(p.valParc||0):a;
+      },0);
+      const rendaExt=(S.rendaExtra||[]).filter(r=>r.tipo==='mensal'||(r.tipo==='unico'&&r.mes===m)).reduce((a,r)=>a+(r.val||0),0);
+      const saldo=renda+rendaExt-tFixCart-tFixConta-tEmp-tParcs-mediaCicloAtual;
+      return {m,lbl:mlbls[i],saldo,tParcs};
+    });
+
+    const maxAbs=Math.max(...projs.map(p=>Math.abs(p.saldo)),1);
+    projEl.innerHTML=`
+      <div style="font-size:11px;color:var(--muted);margin-bottom:8px;font-family:'DM Mono',monospace">
+        * Gastos variáveis estimados em ${fmt(mediaCicloAtual)}/mês (média do ciclo atual)
+      </div>
+      ${projs.map(p=>{
+        const pct=Math.abs(p.saldo)/maxAbs*100;
+        const cor=p.saldo>=0?'var(--green)':'var(--red)';
+        return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+          <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);width:52px;flex-shrink:0">${p.lbl}</span>
+          <div style="flex:1;background:var(--s2);border-radius:4px;height:20px;overflow:hidden;position:relative">
+            <div style="position:absolute;${p.saldo>=0?'left:0':'right:0'};top:0;height:100%;width:${pct}%;background:${cor};border-radius:4px"></div>
+          </div>
+          <span style="font-family:'DM Mono',monospace;font-size:12px;font-weight:600;color:${cor};width:90px;text-align:right;flex-shrink:0">${fmt(p.saldo)}</span>
+        </div>`;
+      }).join('')}`;
+  }
+
+  // ── TERMÔMETRO DE DÍVIDAS ────────────────────────────────────────────────────
+  const divEl=document.getElementById('saude-dividas');
+  if(divEl){
+    const totalParcs=S.parcs.reduce((a,p)=>a+(p.valParc||0)*(p.qtdRestante||0),0);
+    const meses=[7,8,9,10,11,12,13,14,15,16,17,18];
+    const mlbls=['Jul/26','Ago/26','Set/26','Out/26','Nov/26','Dez/26','Jan/27','Fev/27','Mar/27','Abr/27','Mai/27','Jun/27'];
+
+    // Comprometimento mês a mês (só parcelas)
+    const comprometido=meses.map((m,i)=>{
+      const tParcs=S.parcs.reduce((a,p)=>{
+        if(!p.mesInicio)return a;
+        return m>=p.mesInicio&&m<=p.mesInicio+p.qtdTotal-1?a+(p.valParc||0):a;
+      },0);
+      return {m,lbl:mlbls[i],tParcs};
+    });
+    const maxParcs=Math.max(...comprometido.map(c=>c.tParcs),1);
+
+    // Quais parcelas quitam quando
+    const quitacoes={};
+    S.parcs.forEach(p=>{
+      if(!p.mesInicio)return;
+      const mFim=p.mesInicio+p.qtdTotal-1;
+      const lblIdx=mFim-7; // offset do array
+      if(lblIdx>=0&&lblIdx<mlbls.length){
+        quitacoes[mFim]=(quitacoes[mFim]||{lbl:mlbls[lblIdx],val:0});
+        quitacoes[mFim].val+=(p.valParc||0);
+      }
+    });
+    const qs=Object.entries(quitacoes)
+      .sort((a,b)=>parseInt(a[0])-parseInt(b[0]))
+      .map(([m,{lbl,val}])=>({m:parseInt(m),lbl,val}));
+
+    divEl.innerHTML=`
+      <div style="background:var(--s2);border-radius:8px;padding:12px;margin-bottom:16px;text-align:center">
+        <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.8px">Total restante em parcelas</div>
+        <div style="font-size:22px;font-weight:700;color:var(--red);margin-top:4px">${fmt(totalParcs)}</div>
+      </div>
+
+      <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:10px;text-transform:uppercase;letter-spacing:.8px">Parcelas comprometidas por mês</div>
+      ${comprometido.filter(c=>c.tParcs>0).map(c=>{
+        const pct=c.tParcs/maxParcs*100;
+        return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);width:52px;flex-shrink:0">${c.lbl}</span>
+          <div style="flex:1;background:var(--s2);border-radius:4px;height:16px;overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:var(--red);border-radius:4px;opacity:.7"></div>
+          </div>
+          <span style="font-family:'DM Mono',monospace;font-size:12px;font-weight:600;color:var(--red);width:90px;text-align:right;flex-shrink:0">${fmt(c.tParcs)}</span>
+        </div>`;
+      }).join('')}
+
+      <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin:16px 0 10px;text-transform:uppercase;letter-spacing:.8px">Liberações (parcelas que quitam)</div>
+      ${qs.map(q=>`
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)">
+          <span style="font-size:12px;color:var(--muted);font-family:'DM Mono',monospace">${q.lbl}</span>
+          <span style="font-size:13px;font-weight:600;color:var(--green)">+${fmt(q.val)}/mês liberados</span>
+        </div>`).join('')}`;
+  }
+
+  // ── RESERVA DE EMERGÊNCIA ─────────────────────────────────────────────────────
+  const resEl=document.getElementById('saude-reserva');
+  if(resEl){
+    const res=S.reserva||{meta:10000,acumulado:0,mensal:500};
+    const meta=res.meta||10000;
+    const acum=res.acumulado||0;
+    const mensal=res.mensal||500;
+    const pct=meta>0?Math.min((acum/meta)*100,100):0;
+    const mesesRestantes=mensal>0?Math.ceil((meta-acum)/mensal):999;
+    const dataQuit=new Date();
+    dataQuit.setMonth(dataQuit.getMonth()+mesesRestantes);
+    const dtStr=mesesRestantes<999?dataQuit.toLocaleDateString('pt-BR',{month:'short',year:'numeric'}):'—';
+
+    resEl.innerHTML=`
+      <div style="margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+          <span style="font-size:13px;font-weight:500">Progresso</span>
+          <span style="font-family:'DM Mono',monospace;font-size:12px">${fmt(acum)} / ${fmt(meta)} (${pct.toFixed(0)}%)</span>
+        </div>
+        <div style="background:var(--s2);border-radius:6px;height:12px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:var(--green);border-radius:6px;transition:width .3s"></div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div style="background:var(--s2);border-radius:6px;padding:8px;text-align:center">
+          <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px">Falta guardar</div>
+          <div style="font-size:15px;font-weight:700;color:var(--ink)">${fmt(Math.max(0,meta-acum))}</div>
+        </div>
+        <div style="background:var(--s2);border-radius:6px;padding:8px;text-align:center">
+          <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px">Meta em</div>
+          <div style="font-size:15px;font-weight:700;color:var(--ink)">${dtStr}</div>
+        </div>
+      </div>`;
+
+    document.getElementById('res-meta').value=meta||'';
+    document.getElementById('res-acum').value=acum||'';
+    document.getElementById('res-mensal').value=mensal||'';
+  }
+}
+
 // ── MOBILE ────────────────────────────────────────────────────────────────────
 function toggleSB(){
   document.getElementById('sidebar').classList.toggle('open');
@@ -2601,7 +2875,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, set, onValue, get } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
 (function(){
-  const FB_VERSION = '2026-07-v21';
+  const FB_VERSION = '2026-07-v23';
   const fbConfig = {
     apiKey: "AIzaSyCPvz65aVIn9lxIALc4BcOY20PevqXStVA",
     authDomain: "app-financeiro-6fad9.firebaseapp.com",
