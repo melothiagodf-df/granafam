@@ -256,9 +256,11 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
     <div class="pg-title" id="pgtitle">Visão Geral</div>
     <div class="tb-r">
       <div class="mon-nav">
-        <button onclick="moveMes(-1)">‹</button>
-        <span id="mlabel">JUL 2026</span>
-        <button onclick="moveMes(1)">›</button>
+        <select id="mes-dropdown" onchange="setMesDrop(this.value)"
+          style="background:var(--s2);border:1px solid var(--border);border-radius:6px;
+                 padding:4px 8px;font-family:'DM Mono',monospace;font-size:11px;
+                 color:var(--ink);cursor:pointer;outline:none;letter-spacing:.3px">
+        </select>
       </div>
       <button onclick="resetDados()" title="Resetar dados" style="background:none;border:1px solid var(--border);border-radius:4px;padding:3px 8px;font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);cursor:pointer">⟳</button>
       <div class="pulse"></div>
@@ -809,7 +811,7 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
 </div>
 
 <script>
-const DATA_VERSION = '2026-10-v33';
+const DATA_VERSION = '2026-10-v34';
 
 
 const MNS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
@@ -879,6 +881,8 @@ const CAT_KEYWORDS = {
   julia_remedios: ['remedio julia','remédio júlia'],
   julia_lazer: ['parque julia','parque júlia','passeio julia'],
   julia_outros: ['hora de ler','livro julia','livro júlia'],
+  fralda: ['fralda','fraldas','pampers','huggies'],
+  leite: ['leite','nan','aptamil','similac','formula infantil','fórmula'],
 };
 
 function sugerirCategoria(){
@@ -999,6 +1003,8 @@ const CATS_DEFAULT = [
   {key:'julia_remedios',nome:'Júlia Remédios',ico:'💊'},
   {key:'julia_lazer',nome:'Júlia Lazer',ico:'🎡'},
   {key:'julia_outros',nome:'Júlia Outros',ico:'🎀'},
+  {key:'fralda',nome:'Fralda',ico:'👶'},
+  {key:'leite',nome:'Leite',ico:'🍼'},
   {key:'outros',nome:'Outros',ico:'📦'},
 ];
 
@@ -1149,7 +1155,9 @@ async function carregarCatsFirebase() {
 }
 
 const TITLES = {dash:'Visão Geral',gastos:'Gastos do Mês',ck:'Checklist de Pagamentos',sem:'Gastos Semanais',fixos:'Gastos Fixos',emp:'Empréstimos e Financiamentos',parc:'Parcelas',terc:'Gastos de Terceiros',cat:'Categorias',ag:'Acompanhamento Geral',cartao:'Visão por Cartão','cfg-cats':'Gerenciar Categorias','saude':'Saúde Financeira'};
-let CM=6, CY=2026, CW=1;
+let CM=new Date().getMonth(), CY=new Date().getFullYear(), CW=1;
+// Ajuste: se antes de julho/2026, volta pra julho (início do sistema)
+if(CY<2026||(CY===2026&&CM<6)){CM=6;CY=2026;}
 
 function showSyncStatus(ok) {
   const dot = document.querySelector('.pulse');
@@ -1390,7 +1398,9 @@ let S = {
     {id:1,cat:'alimentacao',limite:1200},
     {id:2,cat:'supermercado',limite:800},
     {id:3,cat:'combustivel',limite:500},
-    {id:4,cat:'diversao',limite:300}
+    {id:4,cat:'diversao',limite:300},
+    {id:5,cat:'fralda',limite:600},
+    {id:6,cat:'leite',limite:400}
   ]),
   reserva: ld('reserva', {meta:10000,acumulado:0})
 };
@@ -1432,7 +1442,40 @@ function render(v){
   if(v==='ag')rAg();
   if(v==='cartao')rCartao();
 }
-function moveMes(d){CM+=d;if(CM>11){CM=0;CY++;}if(CM<0){CM=11;CY--;}document.getElementById('mlabel').textContent=MSHH[CM]+' '+CY;const a=document.querySelector('.ni.on');const vn=a?(a.getAttribute('onclick').match(/'([^']+)'/)||[])[1]:'dash';render(vn);}
+function buildMesDropdown(){
+  const sel=document.getElementById('mes-dropdown');
+  if(!sel)return;
+  // Meses disponíveis: jul/26 até jun/27
+  const opts=[
+    [6,2026,'Jul/26'],[7,2026,'Ago/26'],[8,2026,'Set/26'],[9,2026,'Out/26'],
+    [10,2026,'Nov/26'],[11,2026,'Dez/26'],[0,2027,'Jan/27'],[1,2027,'Fev/27'],
+    [2,2027,'Mar/27'],[3,2027,'Abr/27'],[4,2027,'Mai/27'],[5,2027,'Jun/27']
+  ];
+  sel.innerHTML=opts.map(([m,y,lbl])=>
+    `<option value="${m}_${y}" ${CM===m&&CY===y?'selected':''}>${lbl}</option>`
+  ).join('');
+}
+function setMesDrop(val){
+  const [m,y]=val.split('_').map(Number);
+  CM=m;CY=y;
+  buildMesDropdown();
+  const a=document.querySelector('.ni.on');
+  const vn=a?(a.getAttribute('onclick').match(/'([^']+)'/)||[])[1]:'dash';
+  render(vn);
+}
+function moveMes(d){
+  // Mantém compatibilidade interna
+  const opts=[[6,2026],[7,2026],[8,2026],[9,2026],[10,2026],[11,2026],
+              [0,2027],[1,2027],[2,2027],[3,2027],[4,2027],[5,2027]];
+  const cur=opts.findIndex(([m,y])=>m===CM&&y===CY);
+  const next=cur+d;
+  if(next<0||next>=opts.length)return;
+  [CM,CY]=opts[next];
+  buildMesDropdown();
+  const a=document.querySelector('.ni.on');
+  const vn=a?(a.getAttribute('onclick').match(/'([^']+)'/)||[])[1]:'dash';
+  render(vn);
+}
 
 // ── CÁLCULOS CENTRAIS ─────────────────────────────────────────────────────────
 function getRendaExtra(m1){
@@ -2818,7 +2861,7 @@ document.querySelectorAll('.ni').forEach(n=>n.addEventListener('click',()=>{
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 CM=6; CY=2026;
-document.getElementById('mlabel').textContent='JUL 2026';
+buildMesDropdown();
 
 rDash(); // Firebase carregado no bloco abaixo
 </script>
@@ -2829,7 +2872,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, set, onValue, get } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
 (function(){
-  const FB_VERSION = '2026-10-v26';
+  const FB_VERSION = '2026-10-v27';
   const fbConfig = {
     apiKey: "AIzaSyCPvz65aVIn9lxIALc4BcOY20PevqXStVA",
     authDomain: "app-financeiro-6fad9.firebaseapp.com",
