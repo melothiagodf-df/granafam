@@ -693,7 +693,7 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
       <div class="fg" id="pa-parcval-wrap" style="display:none"><label class="flbl">Valor da parcela (R$)</label><input class="fi-inp" type="number" id="pa-parcval" step="0.01" oninput="calcPa()"></div>
       <div class="fg"><label class="flbl">Nº parcelas</label><input class="fi-inp" type="number" id="pa-n" min="1" oninput="calcPa()"></div>
     </div>
-    <div class="fg"><label class="flbl">Mês início</label><select class="fsel" id="pa-mes"><option value="7">Jul/26</option><option value="8">Ago/26</option><option value="9">Set/26</option><option value="10">Out/26</option><option value="11">Nov/26</option><option value="12">Dez/26</option></select></div>
+    <div class="fg"><label class="flbl">Mês início</label><select class="fsel" id="pa-mes"><option value="7">Jul/26</option><option value="8">Ago/26</option><option value="9">Set/26</option><option value="10">Out/26</option><option value="11">Nov/26</option><option value="12">Dez/26</option><option value="13">Jan/27</option><option value="14">Fev/27</option><option value="15">Mar/27</option><option value="16">Abr/27</option><option value="17">Mai/27</option><option value="18">Jun/27</option></select></div>
     <div class="c-lbl" id="pa-calc-lbl">Valor por parcela</div><div style="font-family:'DM Mono',monospace;font-size:14px;padding:4px 0" id="pa-calc">—</div>
     <div class="mfoot"><button class="btn btn-s" onclick="closeM('parc-add')">Cancelar</button><button class="btn btn-s" onclick="saveParc(true)" style="flex:1.4">Salvar e novo</button><button class="btn btn-p" onclick="saveParc()">Salvar</button></div>
   </div>
@@ -811,7 +811,7 @@ nav{flex:1;padding:14px 10px;overflow-y:auto}
 </div>
 
 <script>
-const DATA_VERSION = '2026-10-v34';
+const DATA_VERSION = '2026-10-v35';
 
 
 const MNS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
@@ -1156,8 +1156,12 @@ async function carregarCatsFirebase() {
 
 const TITLES = {dash:'Visão Geral',gastos:'Gastos do Mês',ck:'Checklist de Pagamentos',sem:'Gastos Semanais',fixos:'Gastos Fixos',emp:'Empréstimos e Financiamentos',parc:'Parcelas',terc:'Gastos de Terceiros',cat:'Categorias',ag:'Acompanhamento Geral',cartao:'Visão por Cartão','cfg-cats':'Gerenciar Categorias','saude':'Saúde Financeira'};
 let CM=new Date().getMonth(), CY=new Date().getFullYear(), CW=1;
-// Ajuste: se antes de julho/2026, volta pra julho (início do sistema)
-if(CY<2026||(CY===2026&&CM<6)){CM=6;CY=2026;}
+// Competência: jul/26 = 7 ... dez/26 = 12, jan/27 = 13 ... jun/27 = 18
+function compDe(m,y){ return m+1+(y-2026)*12; }
+function compAtual(){ return compDe(CM,CY); }
+// Limita ao intervalo com ciclos cadastrados (jul/26 a jun/27)
+if(compAtual()<7){CM=6;CY=2026;}
+if(compAtual()>18){CM=5;CY=2027;}
 
 function showSyncStatus(ok) {
   const dot = document.querySelector('.pulse');
@@ -1599,7 +1603,7 @@ function atualizarUltimaAtualizacao(){
 }
 
 function rDash(){
-  const m1=CM+1;
+  const m1=compAtual();
   const t=calcTotais(m1);
   // t.renda já inclui renda extra do mês
   document.getElementById('d-renda').textContent=fmt(t.renda);
@@ -1718,7 +1722,7 @@ function updateGasto(id){
 }
 function rGastos(){
   // Filtra gastos pelo ciclo BRB do mês selecionado
-  const ciclo = getCiclo(CM+1);
+  const ciclo = getCiclo(compAtual());
   let items=[...S.gastos]
     .filter(g => ciclo ? g.data >= ciclo.ini && g.data <= ciclo.fim : true)
     .sort((a,b)=>b.data.localeCompare(a.data));
@@ -1843,7 +1847,7 @@ function updCkVenc(id,v){const c=S.cks.find(c=>c.id===id);if(c){c.venc=parseInt(
 let CW2=1;
 function setSemN(n){CW2=n;rSem();}
 function rSem(){
-  const m1=CM+1;const sems=getSemanas(m1);
+  const m1=compAtual();const sems=getSemanas(m1);
   document.getElementById('sem-tabs').innerHTML=sems.map(s=>`<div class="ftag ${CW2===s.n?'on':''}" onclick="setSemN(${s.n})">Sem ${s.n}</div>`).join('');
   const s=sems.find(x=>x.n===CW2)||sems[0];
   document.getElementById('sem-title').textContent='Semana '+s.n;
@@ -1865,7 +1869,7 @@ function rSem(){
 // ── GASTOS FIXOS ─────────────────────────────────────────────────────────────
 function rFixos(){
   // ── Cards de Combustível e Remédios ───────────────────────────────────────
-  const m1 = CM+1;
+  const m1 = compAtual();
   const ciclo = getCiclo(m1)||getCiclo(m1-1)||{ini:'2000-01-01',fim:'2999-01-01'};
   const gastosC = S.gastos.filter(g=>g.data>=ciclo.ini&&g.data<=ciclo.fim);
   const consumiveis = [
@@ -1998,7 +2002,7 @@ function delEmp(id){S.emprestimos=S.emprestimos.filter(e=>e.id!==id);persist();r
 
 // ── PARCELAS ─────────────────────────────────────────────────────────────────
 function rParc(){
-  const m1=CM+1;
+  const m1=compAtual();
   document.getElementById('parc-mes-lbl').textContent=MNS[CM]+' '+CY;
   const meses=[7,8,9,10,11,12,13,14,15,16,17,18];
   const mlbls=['Jul/26','Ago/26','Set/26','Out/26','Nov/26','Dez/26','Jan/27','Fev/27','Mar/27','Abr/27','Mai/27','Jun/27'];
@@ -2055,7 +2059,7 @@ function setParcF(el,f){
 
 // ── TERCEIROS ────────────────────────────────────────────────────────────────
 function rTerc(){
-  const m1=CM+1;
+  const m1=compAtual();
   const pessoas=[...new Set([...S.tercParcs.map(p=>p.devedor),...S.tercGastos.map(g=>g.pessoa)])];
   const totMes=S.tercParcs.reduce((a,p)=>{
     if(!p.mesInicio)return a;
@@ -2140,7 +2144,7 @@ const MLBLS_AG = ['Julho/2026','Agosto/2026','Setembro/2026','Outubro/2026','Nov
 function popularSelectRelatorio(){
   const sel = document.getElementById('ag-rel-mes');
   if(!sel) return;
-  const hoje = new Date(); const mAtual = hoje.getMonth()+2; // competência atual
+  const hoje = new Date(); const mAtual = compDe(hoje.getMonth(),hoje.getFullYear())+1; // competência atual (+1 p/ manter a regra abaixo)
   sel.innerHTML = MESES_AG.map((m,i) => {
     const fechado = m < mAtual;
     return `<option value="${m}" ${m===mAtual-1?'selected':''}>${MLBLS_AG[i]}${fechado?' ✓':''}</option>`;
@@ -2370,7 +2374,7 @@ function setCartaoV(el, cart){
 }
 
 function rCartao(){
-  const m1 = CM+1;
+  const m1 = compAtual();
   const cart = cartaoAtual;
 
   // Detecta ciclo com gastos
@@ -2469,7 +2473,7 @@ function openM(id,sub){
   if(id==='parc-add'){
     // Pré-seleciona o mês atual de competência
     const selMes = document.getElementById('pa-mes');
-    if(selMes){ selMes.value = String(CM+1); }
+    if(selMes){ selMes.value = String(compAtual()); }
   }
   if(id==='gasto'){
     document.getElementById('g-data').value=today;
@@ -2704,7 +2708,7 @@ function salvarReserva(){
 }
 
 function rSaude(){
-  const m1=CM+1;
+  const m1=compAtual();
   const ciclo=getCiclo(m1);
   const gastosMes=ciclo?S.gastos.filter(g=>g.data>=ciclo.ini&&g.data<=ciclo.fim):[];
   const rendaTotal=S.renda.t+S.renda.n+(S.renda.e||0);
@@ -2860,7 +2864,7 @@ document.querySelectorAll('.ni').forEach(n=>n.addEventListener('click',()=>{
 }));
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
-CM=6; CY=2026;
+// CM/CY já foram inicializados com o mês atual — não sobrescrever aqui
 buildMesDropdown();
 
 rDash(); // Firebase carregado no bloco abaixo
@@ -2872,7 +2876,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, set, onValue, get } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
 (function(){
-  const FB_VERSION = '2026-10-v27';
+  const FB_VERSION = '2026-10-v28';
   const fbConfig = {
     apiKey: "AIzaSyCPvz65aVIn9lxIALc4BcOY20PevqXStVA",
     authDomain: "app-financeiro-6fad9.firebaseapp.com",
