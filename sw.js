@@ -1,5 +1,5 @@
 // Mude este número toda vez que fizer uma atualização
-const CACHE_VERSION = 'granafam-v35';
+const CACHE_VERSION = 'nossobolso-v1';
 const ASSETS = [
   '/granafam/',
   '/granafam/index.html',
@@ -39,11 +39,11 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   const url = e.request.url;
 
-  // Nunca intercepta chamadas externas
-  if (url.includes('localhost:8000') ||
+  // Nunca intercepta chamadas externas (Firebase, fontes, etc.)
+  if (url.includes('gstatic.com') ||
+      url.includes('firebaseio.com') ||
+      url.includes('googleapis.com') ||
       url.includes('pluggy.ai') ||
-      url.includes('fonts.googleapis') ||
-      url.includes('fonts.gstatic') ||
       url.includes('cdnjs.cloudflare') ||
       url.includes('cdn.jsdelivr') ||
       url.includes('cdn.pluggy')) {
@@ -55,7 +55,6 @@ self.addEventListener('fetch', e => {
     e.respondWith(
       fetch(e.request)
         .then(response => {
-          // Atualiza o cache com a versão nova
           const clone = response.clone();
           caches.open(CACHE_VERSION).then(cache => cache.put(e.request, clone));
           return response;
