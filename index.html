@@ -94,11 +94,19 @@ button{cursor:pointer}
 .eyebrow{font-size:12px;color:var(--muted);letter-spacing:.3px}
 .brand{font-family:var(--f-display);font-weight:600;color:var(--accent);font-size:13px}
 .h1{font-family:var(--f-display);font-size:28px;font-weight:600;margin:0;text-wrap:balance}
-.comp-select{appearance:none;-webkit-appearance:none;border:none;background:transparent;font-family:var(--f-display);font-size:24px;font-weight:600;padding:0 26px 0 0;margin:0;color:var(--ink);
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%238A8579' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right center;max-width:100%}
-.pill-select{appearance:none;-webkit-appearance:none;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--surface);font-weight:700;font-size:13px;padding:0 30px 0 12px;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238A8579' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center}
+.comp-select{appearance:none;-webkit-appearance:none;border:none;background:transparent;font-family:var(--f-display);font-size:24px;font-weight:600;padding:0;margin:0;color:var(--ink);
+  display:inline-flex;align-items:center;gap:6px;cursor:pointer;max-width:100%;text-align:left}
+.pill-select{appearance:none;-webkit-appearance:none;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--surface);font-weight:700;font-size:13px;padding:0 12px;
+  display:inline-flex;align-items:center;gap:8px;cursor:pointer;color:var(--ink)}
 .icon-btn{width:44px;height:44px;flex:none;border-radius:12px;border:1px solid var(--line);background:var(--surface);display:flex;align-items:center;justify-content:center;color:var(--ink-2)}
+.compdd{position:relative;display:inline-block;max-width:100%}
+.compdd .chev{display:inline-flex;flex:none;color:var(--muted-2);transition:transform .15s ease}
+.compdd .chev svg{display:block}
+.comp-select.open .chev,.pill-select.open .chev{transform:rotate(180deg)}
+.compdd-list{position:absolute;top:calc(100% + 8px);left:0;z-index:15;min-width:230px;max-height:min(60vh,340px);overflow-y:auto;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 16px 34px rgba(20,18,15,.18);padding:6px;display:flex;flex-direction:column;gap:2px}
+.compdd-item{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;text-align:left;padding:10px 12px;border-radius:10px;border:none;background:none;font-family:var(--f-body);font-size:14px;font-weight:600;color:var(--ink-2);white-space:nowrap}
+.compdd-item:hover{background:var(--line-soft)}
+.compdd-item.on{background:var(--accent-soft);color:var(--accent)}
 
 /* blocos */
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px}
@@ -297,7 +305,7 @@ function vencDaFatura(card,comp){const [y,m]=parts(comp);return mk(y,m,card.venc
 const KEY='nossobolso.v1';
 const CATS=['Mercado','Fralda','Leite','Gasolina','Farmácia','Transporte','Saúde','Lazer','Casa','Compras','Educação','Assinaturas','Impostos','Seguros','Outros'];
 let S=null;
-const ui={tab:'inicio',comp:null,filtro:'todos',fatCard:null,confirm:null,form:null};
+const ui={tab:'inicio',comp:null,filtro:'todos',fatCard:null,confirm:null,form:null,compOpenId:null};
 
 function seed(){
   const cards=[
@@ -512,12 +520,16 @@ const I={
   up:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>',
   check:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>',
   x:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
-  back:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>'
+  back:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>',
+  chev:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>'
 };
-function compOptions(sel,cls,id){
-  const B=compPadrao();let h='';
-  for(let k=-6;k<=8;k++){const c=addM(B,k);h+='<option value="'+c+'"'+(c===sel?' selected':'')+'>'+mesAno(c)+'</option>';}
-  return '<select class="'+cls+'" id="'+id+'" data-act="comp" aria-label="Mês de competência">'+h+'</select>';
+function compOptions(sel,cls,id,big){
+  const B=compPadrao();const open=ui.compOpenId===id;
+  const fmt=c=>big?('Competência '+mesNome(c)):mesAno(c);
+  let items='';
+  for(let k=-6;k<=8;k++){const c=addM(B,k);items+='<button type="button" class="compdd-item'+(c===sel?' on':'')+'" data-act="compset" data-v="'+c+'">'+fmt(c)+(c===sel?I.check:'')+'</button>';}
+  return '<div class="compdd"><button type="button" class="'+cls+(open?' open':'')+'" id="'+id+'" data-act="compopen" data-id="'+id+'" aria-haspopup="listbox" aria-expanded="'+open+'" aria-label="Mês de competência"><span>'+esc(fmt(sel))+'</span><span class="chev">'+I.chev+'</span></button>'+
+    (open?'<div class="compdd-list" role="listbox" aria-label="Escolher competência">'+items+'</div>':'')+'</div>';
 }
 function monthOptions(sel,from,to,allowEmpty){
   const B=compPadrao();let h=allowEmpty?'<option value=""'+(!sel?' selected':'')+'>Sem data de fim</option>':'';
@@ -557,7 +569,7 @@ function vInicio(){
   else if(livre>0)porDia='≈ R$ '+brl0(livre/dias)+'/dia até '+ddmm(fim);
   else porDia='Passou R$ '+brl0(-livre)+' do que cabe';
   const MNS=mesNome(c);
-  let h=head('<select class="comp-select" id="comp-inicio" data-act="comp" aria-label="Competência">'+(function(){const B=compPadrao();let o='';for(let k=-6;k<=8;k++){const cc=addM(B,k);o+='<option value="'+cc+'"'+(cc===c?' selected':'')+'>Competência '+mesNome(cc)+'</option>';}return o;})()+'</select>',
+  let h=head(compOptions(c,'comp-select','comp-inicio',true),
     '<button class="icon-btn" data-act="tab" data-v="ajustes" aria-label="Ajustes">'+I.gear+'</button>');
   h+='<div class="dash">';
   if(S.exemplo)h+='<div class="banner a-banner"><span>Simulação com dados de exemplo</span><button class="link" data-act="tab" data-v="ajustes">Ajustar</button></div>';
@@ -825,12 +837,15 @@ let toastT=null;
 function toast(m){const r=document.getElementById('toast-root');r.innerHTML='<div class="toast" role="status">'+esc(m)+'</div>';clearTimeout(toastT);toastT=setTimeout(()=>{r.innerHTML='';},2200);}
 
 document.addEventListener('click',e=>{
+  if(ui.compOpenId&&!e.target.closest('.compdd')){ui.compOpenId=null;render(true);}
   const el=e.target.closest('[data-act]');if(!el)return;
   const a=el.dataset.act;
   if(a==='closebg'){if(e.target===el){ui.form=null;renderSheet();}return;}
   if(el.tagName==='SELECT'||el.tagName==='INPUT'||el.tagName==='TEXTAREA')return;
   switch(a){
-    case 'tab': ui.tab=el.dataset.v;ui.confirm=null;render();window.scrollTo(0,0);break;
+    case 'compopen': ui.compOpenId=(ui.compOpenId===el.dataset.id)?null:el.dataset.id;render(true);break;
+    case 'compset': ui.comp=el.dataset.v;ui.compOpenId=null;render(true);break;
+    case 'tab': ui.tab=el.dataset.v;ui.confirm=null;ui.compOpenId=null;render();window.scrollTo(0,0);break;
     case 'novo': openForm(null,el.dataset.tipo);break;
     case 'edit': {const L=S.lanc.find(x=>x.id===+el.dataset.id);if(L)openForm(L);break;}
     case 'close': ui.form=null;renderSheet();break;
