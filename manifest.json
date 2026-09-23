@@ -1,25 +1,14 @@
 {
-  "name": "GranaFam",
-  "short_name": "GranaFam",
-  "description": "Controle financeiro familiar — Thiago & Nataly",
-  "start_url": "/granafam/",
-  "scope": "/granafam/",
+  "name": "Nosso Bolso",
+  "short_name": "Nosso Bolso",
+  "description": "Controle financeiro da família",
+  "start_url": ".",
+  "scope": ".",
   "display": "standalone",
-  "orientation": "portrait",
-  "background_color": "#f7f5f0",
-  "theme_color": "#0f0e0c",
+  "background_color": "#F4F1EA",
+  "theme_color": "#1F5C4A",
   "icons": [
-    {
-      "src": "icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
-    }
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
   ]
 }
