@@ -171,8 +171,10 @@ button{cursor:pointer}
 
 /* barras */
 .bars{display:flex;align-items:flex-end;gap:8px;height:120px}
-.bars .col{flex:1 1 0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:5px;height:100%;min-width:0}
+.bars .col{flex:1 1 0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:5px;height:100%;min-width:0;background:none;border:none;padding:0;font:inherit}
+.bars button.col{cursor:pointer}
 .bars .col .bv{font-family:var(--f-mono);font-size:10px;color:var(--ink-2)}
+.bars .col .bv.neg{color:var(--warn-ink)}
 .bars .col .b{width:100%;border-radius:6px 6px 2px 2px;min-height:3px}
 .bars .col .bl{font-family:var(--f-mono);font-size:10px;color:var(--muted);text-transform:uppercase}
 .bars .col.on .bv,.bars .col.on .bl{color:var(--accent);font-weight:500}
@@ -638,6 +640,22 @@ function termometro(c,n,compact){
     h+='<div class="col'+(m===alivio?' on':'')+'"><span class="bv">'+(v?k1(v):'—')+'</span><span class="b" style="height:'+Math.max(3,r*82).toFixed(0)+'px;background:'+(m===alivio?'var(--accent)':col)+'"></span><span class="bl">'+mesCurto(m).slice(0,3)+'</span></div>';});
   return h+'</div></section>';
 }
+function livreDe(comp){const t=totais(comp);return t.ent-t.saidas-(S.reserva.mensal||0);}
+function painelDisponibilidade(base,n){
+  const vals=[];for(let k=0;k<n;k++){const m=addM(base,k);vals.push([m,livreDe(m)]);}
+  const max=Math.max(...vals.map(v=>Math.abs(v[1])),1);
+  const best=vals.reduce((a,b)=>b[1]>a[1]?b:a,vals[0]);
+  const piores=vals.filter(v=>v[1]<0).length;
+  const nota=piores?piores+' mês(es) no vermelho à frente — dá pra ajustar antes.':'Melhor mês pra uma folga maior: '+mesCurto(best[0])+' ('+brl0(best[1])+')';
+  let h='<section class="panel"><div class="panel-h"><span class="panel-t">Disponibilidade lá na frente</span></div>'+
+    '<p class="note" style="margin:0 0 10px">Livre para gastar em cada mês, já descontando entradas, parcelas, fixos e a reserva. Toque num mês pra abrir o Início daquela competência.</p>'+
+    '<div class="bars" role="img" aria-label="Livre para gastar por mês">';
+  vals.forEach(([m,v])=>{const neg=v<0;const r=Math.min(1,Math.abs(v)/max);
+    const col=neg?'var(--warn)':(m===best[0]&&best[1]>0?'var(--accent)':'var(--calm)');
+    h+='<button type="button" class="col" data-act="gocomp" data-v="'+m+'"><span class="bv'+(neg?' neg':'')+'">'+(neg?'−':'')+k1(Math.abs(v))+'</span><span class="b" style="height:'+Math.max(3,r*82).toFixed(0)+'px;background:'+col+'"></span><span class="bl">'+mesCurto(m).slice(0,3)+'</span></button>';});
+  h+='</div><p class="note" style="margin:10px 0 0;font-weight:700;color:'+(piores?'var(--warn-ink)':'var(--accent)')+'">'+nota+'</p></section>';
+  return h;
+}
 function gastoPorCat(c){const g={};occs(c).forEach(x=>{if(x.kind==='gasto'){const k=x.L.cat||'Outros';g[k]=(g[k]||0)+x.valor;}});return g;}
 function metasBloco(c,limit,editavel){
   const g=gastoPorCat(c);
@@ -705,6 +723,7 @@ function vPlan(){
   const c=ui.comp,B=compPadrao();
   let h=head('Planejamento','<span style="margin-top:22px">'+compTrigger(c,'comp-plan')+'</span>');
   h+='<div class="wrap stack" style="margin-top:8px"><p class="note" style="margin:0">O que se repete, o que termina e o que vocês guardam.</p>';
+  h+=painelDisponibilidade(B,12);
   const ent=S.lanc.filter(L=>L.tipo==='entrada').sort((a,b)=>a.dia-b.dia),fix=S.lanc.filter(L=>L.tipo==='fixo').sort((a,b)=>a.dia-b.dia);
   h+='<section class="panel" style="padding:14px 16px 6px"><div class="panel-h"><span class="panel-t">Entradas</span><button class="link" data-act="novo" data-tipo="entrada">+ Adicionar</button></div>';
   h+=ent.length?ent.map(L=>'<button class="row" data-act="edit" data-id="'+L.id+'"><span class="av in" style="border-radius:10px;width:40px;height:40px;flex-direction:column;line-height:1;font-family:var(--f-mono);font-size:14px"><span style="font-size:8px;font-family:var(--f-body);letter-spacing:.3px">DIA</span>'+p2(L.dia)+'</span><span class="grow"><span class="t">'+esc(L.desc)+'</span><span class="s">'+(L.fim?(L.fim===L.inicio?'Só em '+mesCurto(L.inicio):mesCurto(L.inicio)+' → '+mesCurto(L.fim)+(L.fim>=B?' · termina em '+(diffM(B,L.fim)+1)+' mês(es)':' · encerrada')):'Todo mês')+'</span></span><span class="v pos">'+brl0(L.valor)+'</span></button>').join(''):'<div class="empty">Nenhuma entrada.</div>';
@@ -858,6 +877,7 @@ document.addEventListener('click',e=>{
     case 'compopen': ui.compOpenId=(ui.compOpenId===el.dataset.id)?null:el.dataset.id;render(true);break;
     case 'compset': ui.comp=el.dataset.v;ui.compOpenId=null;render(true);break;
     case 'compstep': ui.comp=addM(ui.comp,parseInt(el.dataset.dir,10));ui.compOpenId=null;render(true);break;
+    case 'gocomp': ui.tab='inicio';ui.comp=el.dataset.v;ui.compOpenId=null;render();window.scrollTo(0,0);break;
     case 'tab': ui.tab=el.dataset.v;ui.confirm=null;ui.compOpenId=null;render();window.scrollTo(0,0);break;
     case 'novo': openForm(null,el.dataset.tipo);break;
     case 'edit': {const L=S.lanc.find(x=>x.id===+el.dataset.id);if(L)openForm(L);break;}
