@@ -395,8 +395,8 @@ function seed(){
   // fixos cobrados no cartão (tudo no BRB Black por enquanto)
   [['Seguro Auto',229.43,20,'brb','Seguros'],['Ginástica Júlia',253,20,'brb','Lazer'],['Assinatura Google',4.5,20,'brb','Assinaturas'],
    ['Assinatura Apple',66.9,20,'brb','Assinaturas'],['Lightroom',8.5,20,'brb','Assinaturas'],['Spotify',30,20,'brb','Assinaturas'],
-   ['Telefone',79.8,20,'brb','Casa'],['Combustível',700,20,'brb','Gasolina'],['Xbox',36,20,'brb','Lazer'],
-   ['Fotoclube',39.8,20,'brb','Assinaturas'],['Remédios',1200,20,'brb','Saúde'],['Estácio',120,20,'brb','Educação'],
+   ['Telefone',79.8,20,'brb','Casa'],['Xbox',36,20,'brb','Lazer'],
+   ['Fotoclube',39.8,20,'brb','Assinaturas'],['Estácio',120,20,'brb','Educação'],
    ['Meli+',19.9,20,'brb','Assinaturas'],['Academia Thiago',50,20,'brb','Saúde'],
   // fixos debitados em conta
    ['Condomínio',680,5,'conta','Casa'],['Água',112.02,25,'conta','Casa'],['Luz',158.18,25,'conta','Casa'],
@@ -641,15 +641,21 @@ function termometro(c,n,compact){
   return h+'</div></section>';
 }
 function livreDe(comp){const t=totais(comp);return t.ent-t.saidas-(S.reserva.mensal||0);}
+function metasRestantes(comp){
+  const g=gastoPorCat(comp);let r=0;
+  Object.entries(S.metas||{}).forEach(([cat,lim])=>{r+=Math.max(0,lim-(g[cat]||0));});
+  return r;
+}
+function livreComMetas(comp){return livreDe(comp)-metasRestantes(comp);}
 function painelDisponibilidade(base,n){
-  const vals=[];for(let k=0;k<n;k++){const m=addM(base,k);vals.push([m,livreDe(m)]);}
+  const vals=[];for(let k=0;k<n;k++){const m=addM(base,k);vals.push([m,livreComMetas(m)]);}
   const max=Math.max(...vals.map(v=>Math.abs(v[1])),1);
   const best=vals.reduce((a,b)=>b[1]>a[1]?b:a,vals[0]);
   const piores=vals.filter(v=>v[1]<0).length;
   const nota=piores?piores+' mês(es) no vermelho à frente — dá pra ajustar antes.':'Melhor mês pra uma folga maior: '+mesCurto(best[0])+' ('+brl0(best[1])+')';
   let h='<section class="panel"><div class="panel-h"><span class="panel-t">Disponibilidade lá na frente</span></div>'+
-    '<p class="note" style="margin:0 0 10px">Livre para gastar em cada mês, já descontando entradas, parcelas, fixos e a reserva. Toque num mês pra abrir o Início daquela competência.</p>'+
-    '<div class="bars" role="img" aria-label="Livre para gastar por mês">';
+    '<p class="note" style="margin:0 0 10px">Livre para gastar em cada mês, já descontando entradas, parcelas, fixos, reserva e o que falta gastar das metas (Fralda, Leite, Gasolina, Farmácia). Toque num mês pra abrir o Início daquela competência.</p>'+
+    '<div class="bars" role="img" aria-label="Livre para gastar por mês, considerando metas">';
   vals.forEach(([m,v])=>{const neg=v<0;const r=Math.min(1,Math.abs(v)/max);
     const col=neg?'var(--warn)':(m===best[0]&&best[1]>0?'var(--accent)':'var(--calm)');
     h+='<button type="button" class="col" data-act="gocomp" data-v="'+m+'"><span class="bv'+(neg?' neg':'')+'">'+(neg?'−':'')+k1(Math.abs(v))+'</span><span class="b" style="height:'+Math.max(3,r*82).toFixed(0)+'px;background:'+col+'"></span><span class="bl">'+mesCurto(m).slice(0,3)+'</span></button>';});
