@@ -305,10 +305,13 @@ const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;'
 function fechamentoDe(card,iso){const [y,m,d]=parts(iso);return d<=card.fecha?mk(y,m,card.fecha):mk(y,m+1,card.fecha);}
 function vencDoFechamento(card,close){const [y,m]=parts(close);return card.vence>card.fecha?mk(y,m,card.vence):mk(y,m+1,card.vence);}
 function vencDe(card,iso){return vencDoFechamento(card,fechamentoDe(card,iso));}
-function faturaDe(card,iso){return vencDe(card,iso).slice(0,7);}
-function closeDaFatura(card,comp){const [y,m]=parts(comp);return card.vence>card.fecha?mk(y,m,card.fecha):mk(y,m-1,card.fecha);}
+// compOffset: alguns cartões (ex.: BRB, que vence dia 20 — o mesmo dia do salário do Thiago) têm sua
+// competência empurrada +1 mês, pra casar com o salário que efetivamente paga aquela fatura.
+function rawComp(card,comp){return addM(comp,-(card.compOffset||0));}
+function faturaDe(card,iso){return addM(vencDe(card,iso).slice(0,7),card.compOffset||0);}
+function closeDaFatura(card,comp){const r=rawComp(card,comp);const [y,m]=parts(r);return card.vence>card.fecha?mk(y,m,card.fecha):mk(y,m-1,card.fecha);}
 function openDaFatura(card,comp){return addD(closeDaFatura(card,addM(comp,-1)),1);}
-function vencDaFatura(card,comp){const [y,m]=parts(comp);return mk(y,m,card.vence);}
+function vencDaFatura(card,comp){const r=rawComp(card,comp);const [y,m]=parts(r);return mk(y,m,card.vence);}
 
 /* ───────── estado ───────── */
 const KEY='nossobolso.v1';
@@ -318,7 +321,7 @@ const ui={tab:'inicio',comp:null,filtro:'todos',fatCard:null,confirm:null,form:n
 
 function seed(){
   const cards=[
-    {id:'brb',nome:'BRB Black',fecha:9,vence:20},
+    {id:'brb',nome:'BRB Black',fecha:9,vence:20,compOffset:1},
     {id:'azul',nome:'Azul',fecha:24,vence:1},
     {id:'bb',nome:'BB Smiles',fecha:22,vence:1},
     {id:'nubank',nome:'Nubank',fecha:24,vence:1},
@@ -406,7 +409,7 @@ function seed(){
    ['Financiamento Imóvel',3700,25,'conta','Casa'],['Financiamento Carro',980,10,'conta','Transporte']
   ].forEach(([desc,valor,dia,conta,cat])=>add({tipo:'fixo',desc,valor,dia,conta,cat,inicio:ini,fim:null}));
   // entradas
-  add({tipo:'entrada',desc:'Salário Thiago',valor:8500,dia:20,inicio:ini,fim:null,quem:'T',cat:'Renda'});
+  add({tipo:'entrada',desc:'Salário Thiago',valor:8500,dia:20,inicio:ini,fim:null,quem:'T',cat:'Renda',compOffset:1});
   add({tipo:'entrada',desc:'Salário Nataly',valor:8000,dia:1,inicio:ini,fim:null,quem:'N',cat:'Renda'});
   add({tipo:'entrada',desc:'Salário-maternidade',valor:1400,dia:2,inicio:'2026-10',fim:'2026-12',quem:'N',cat:'Renda'});
   // faturas que já venceram (antes de hoje) ficam marcadas como pagas, pra não poluir a tela
@@ -414,7 +417,14 @@ function seed(){
   for(let k=-24;k<=0;k++){const c=addM(B,k);cards.forEach(cd=>{if(vencDaFatura(cd,c)<HOJE)st.pagos[cd.id+'|'+c]=true;});}
   return st;
 }
-function load(){try{const r=localStorage.getItem(KEY);if(r){const o=JSON.parse(r);if(o&&o.v===1){S=o;return;}}}catch(e){}S=seed();}
+// migra dados salvos antes do compOffset existir (ex.: quem já tinha lançamentos no BRB/salário do Thiago)
+function migrar(){
+  const brb=S.cards&&S.cards.find(c=>c.id==='brb');
+  if(brb&&brb.compOffset===undefined)brb.compOffset=1;
+  const th=S.lanc&&S.lanc.find(L=>L.tipo==='entrada'&&L.desc==='Salário Thiago');
+  if(th&&th.compOffset===undefined)th.compOffset=1;
+}
+function load(){try{const r=localStorage.getItem(KEY);if(r){const o=JSON.parse(r);if(o&&o.v===1){S=o;migrar();return;}}}catch(e){}S=seed();}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}pushFirebase();}
 
 /* ───────── Firebase (sincroniza entre os aparelhos da família) ───────── */
@@ -442,7 +452,7 @@ function pushFirebase(){
   fbPushing=true;
   fbRef.set(syncPayload()).catch(e=>console.warn('Firebase set falhou:',e)).finally(()=>{setTimeout(()=>{fbPushing=false;},400);});
 }
-function applyRemote(data){FB_KEYS.forEach(k=>{if(data[k]!==undefined)S[k]=data[k];});try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+function applyRemote(data){FB_KEYS.forEach(k=>{if(data[k]!==undefined)S[k]=data[k];});migrar();try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
 function startFirebaseSync(){
   if(!fbRef)return;
   fbRef.once('value').then(snap=>{
@@ -490,7 +500,10 @@ function occs(comp){
         else if(k===0)out.push({kind:'fixo',L,valor:L.valor,data:d,sinal:-1,conta:'conta'});
       }
     }else if(L.tipo==='entrada'){
-      if(comp>=L.inicio&&(!L.fim||comp<=L.fim)){const [y,mm]=parts(comp);out.push({kind:'entrada',L,valor:L.valor,data:mk(y,mm,L.dia),sinal:1,conta:'conta'});}
+      // compOffset: o salário do Thiago (dia 20) é considerado parte da competência do mês seguinte
+      // (junto com o salário da Nataly, que cai no dia 1 desse mês seguinte).
+      const off=L.compOffset||0,raw=addM(comp,-off);
+      if(raw>=L.inicio&&(!L.fim||raw<=L.fim)){const [y,mm]=parts(raw);out.push({kind:'entrada',L,valor:L.valor,data:mk(y,mm,L.dia),sinal:1,conta:'conta'});}
     }
   }
   return (memo[comp]=out);
@@ -510,8 +523,17 @@ function fatura(card,comp){
 }
 const STATUS_TXT={aberta:'ABERTA',fechada:'A PAGAR',vencida:'VENCIDA',paga:'PAGA'};
 function pagaCom(venc){
+  // busca direto nas entradas recorrentes pela DATA REAL (não pela competência, que pode estar
+  // deslocada por compOffset) — evita confundir "em que balde cai" com "quando o dinheiro entra".
   const c=venc.slice(0,7);let best=null;
-  [addM(c,-1),c].forEach(m=>occs(m).filter(x=>x.kind==='entrada'&&x.data<=venc).forEach(x=>{if(!best||x.data>best.data)best=x;}));
+  [addM(c,-1),c].forEach(m=>{
+    S.lanc.filter(L=>L.tipo==='entrada').forEach(L=>{
+      if(m>=L.inicio&&(!L.fim||m<=L.fim)){
+        const [y,mm]=parts(m);const d=mk(y,mm,L.dia);
+        if(d<=venc&&(!best||d>best.data))best={kind:'entrada',L,valor:L.valor,data:d,sinal:1,conta:'conta'};
+      }
+    });
+  });
   return best;
 }
 function parcelasPorComp(c){return occs(c).filter(x=>x.kind==='parcela').reduce((a,x)=>a+x.valor,0);}
@@ -613,7 +635,7 @@ function vInicio(){
 
   // cartões
   let best=null,worst=null;
-  const info=S.cards.map(cd=>{const cl=fechamentoDe(cd,HOJE),vc=vencDoFechamento(cd,cl),comp=vc.slice(0,7);const op=openDaFatura(cd,comp);
+  const info=S.cards.map(cd=>{const cl=fechamentoDe(cd,HOJE),vc=vencDoFechamento(cd,cl),comp=addM(vc.slice(0,7),cd.compOffset||0);const op=openDaFatura(cd,comp);
     const f=fatura(cd,comp);const gasto=f.itens.filter(x=>x.kind!=='parcela').reduce((a,x)=>a+x.valor,0);const parc=f.itens.filter(x=>x.kind==='parcela').reduce((a,x)=>a+x.valor,0);
     const span=Math.max(1,daysBetween(op,cl)),pct=Math.min(100,Math.max(0,daysBetween(op,HOJE)/span*100));
     const o={cd,cl,vc,comp,gasto,parc,pct,prazo:daysBetween(HOJE,vc)};
@@ -794,7 +816,7 @@ function previewTxt(){
     if(!card)return 'Sai da conta em '+ddmm(F.data)+'<small>Entra na competência de '+mesNome(F.data.slice(0,7))+'.</small>';
     const vc=vencDe(card,F.data),cl=fechamentoDe(card,F.data);
     let bestTxt='';if(F.data===HOJE&&S.cards.length>1){let b=null;S.cards.forEach(c=>{const x=vencDe(c,HOJE);if(!b||x>b.x)b={c,x};});if(b.c.id!==card.id)bestTxt='<small>Dica: no '+esc(b.c.nome)+' essa compra só venceria '+ddmm(b.x)+'.</small>';}
-    return 'Cai na fatura de '+mesNome(vc.slice(0,7))+' do '+esc(card.nome)+' · fecha '+ddmm(cl)+', vence '+ddmm(vc)+bestTxt;
+    return 'Cai na fatura de '+mesNome(faturaDe(card,F.data))+' do '+esc(card.nome)+' · fecha '+ddmm(cl)+', vence '+ddmm(vc)+bestTxt;
   }
   if(F.tipo==='parcelado'){
     const vals=F.valoresTxt.trim()?F.valoresTxt.split(/[;\n]+/).map(num).filter(x=>x>0):null;
