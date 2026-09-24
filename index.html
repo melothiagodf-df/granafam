@@ -94,16 +94,23 @@ button{cursor:pointer}
 .eyebrow{font-size:12px;color:var(--muted);letter-spacing:.3px}
 .brand{font-family:var(--f-display);font-weight:600;color:var(--accent);font-size:13px}
 .h1{font-family:var(--f-display);font-size:28px;font-weight:600;margin:0;text-wrap:balance}
-.comp-select{appearance:none;-webkit-appearance:none;border:none;background:transparent;font-family:var(--f-display);font-size:24px;font-weight:600;padding:0;margin:0;color:var(--ink);
-  display:inline-flex;align-items:center;gap:6px;cursor:pointer;max-width:100%;text-align:left}
-.pill-select{appearance:none;-webkit-appearance:none;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--surface);font-weight:700;font-size:13px;padding:0 12px;
-  display:inline-flex;align-items:center;gap:8px;cursor:pointer;color:var(--ink)}
 .icon-btn{width:44px;height:44px;flex:none;border-radius:12px;border:1px solid var(--line);background:var(--surface);display:flex;align-items:center;justify-content:center;color:var(--ink-2)}
-.compdd{position:relative;display:inline-block;max-width:100%}
-.compdd .chev{display:inline-flex;flex:none;color:var(--muted-2);transition:transform .15s ease}
-.compdd .chev svg{display:block}
-.comp-select.open .chev,.pill-select.open .chev{transform:rotate(180deg)}
-.compdd-list{position:absolute;top:calc(100% + 8px);left:0;z-index:15;min-width:230px;max-height:min(60vh,340px);overflow-y:auto;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 16px 34px rgba(20,18,15,.18);padding:6px;display:flex;flex-direction:column;gap:2px}
+
+/* seletor de competência (pill com setas) */
+.compdd{position:relative;display:inline-flex;align-items:center;gap:2px;max-width:100%}
+.comp-pill{appearance:none;-webkit-appearance:none;border:1px solid var(--line);background:var(--surface);border-radius:999px;height:34px;padding:0 8px 0 14px;margin:0;color:var(--ink);
+  display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-family:var(--f-body);font-weight:700;font-size:13px;box-shadow:0 1px 2px rgba(20,18,15,.05);transition:background .12s ease,border-color .12s ease;max-width:100%}
+.comp-pill span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.comp-pill:hover{background:var(--line-soft)}
+.comp-pill.open{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.comp-pill.big{height:44px;padding:0 12px 0 18px;font-family:var(--f-display);font-size:19px;font-weight:600;border-radius:16px;gap:10px}
+.comp-pill .chev-wrap{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--line-soft);color:var(--muted-2);flex:none;transition:transform .15s ease}
+.comp-pill.open .chev-wrap{background:var(--accent);color:var(--accent-ink);transform:rotate(180deg)}
+.comp-step{width:34px;height:34px;flex:none;border-radius:50%;border:1px solid var(--line);background:var(--surface);display:flex;align-items:center;justify-content:center;color:var(--ink-2)}
+.comp-step:hover{background:var(--line-soft)}
+.compdd.big .comp-step{width:38px;height:38px}
+.compdd-list{position:absolute;top:calc(100% + 8px);left:0;z-index:15;min-width:200px;max-height:min(60vh,340px);overflow-y:auto;background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:0 16px 34px rgba(20,18,15,.18);padding:6px;display:flex;flex-direction:column;gap:2px}
+.compdd.big .compdd-list{left:44px}
 .compdd-item{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;text-align:left;padding:10px 12px;border-radius:10px;border:none;background:none;font-family:var(--f-body);font-size:14px;font-weight:600;color:var(--ink-2);white-space:nowrap}
 .compdd-item:hover{background:var(--line-soft)}
 .compdd-item.on{background:var(--accent-soft);color:var(--accent)}
@@ -521,15 +528,20 @@ const I={
   check:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>',
   x:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
   back:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>',
-  chev:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>'
+  chev:'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>',
+  chevL:'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>',
+  chevR:'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>'
 };
-function compOptions(sel,cls,id,big){
+function compTrigger(sel,id,big){
   const B=compPadrao();const open=ui.compOpenId===id;
-  const fmt=c=>big?('Competência '+mesNome(c)):mesAno(c);
   let items='';
-  for(let k=-6;k<=8;k++){const c=addM(B,k);items+='<button type="button" class="compdd-item'+(c===sel?' on':'')+'" data-act="compset" data-v="'+c+'">'+fmt(c)+(c===sel?I.check:'')+'</button>';}
-  return '<div class="compdd"><button type="button" class="'+cls+(open?' open':'')+'" id="'+id+'" data-act="compopen" data-id="'+id+'" aria-haspopup="listbox" aria-expanded="'+open+'" aria-label="Mês de competência"><span>'+esc(fmt(sel))+'</span><span class="chev">'+I.chev+'</span></button>'+
-    (open?'<div class="compdd-list" role="listbox" aria-label="Escolher competência">'+items+'</div>':'')+'</div>';
+  for(let k=-6;k<=8;k++){const c=addM(B,k);items+='<button type="button" class="compdd-item'+(c===sel?' on':'')+'" data-act="compset" data-v="'+c+'">'+mesAno(c)+(c===sel?I.check:'')+'</button>';}
+  let h='<div class="compdd'+(big?' big':'')+'">';
+  if(big)h+='<button type="button" class="comp-step" data-act="compstep" data-v="'+id+'" data-dir="-1" aria-label="Mês anterior">'+I.chevL+'</button>';
+  h+='<button type="button" class="comp-pill'+(big?' big':'')+(open?' open':'')+'" id="'+id+'" data-act="compopen" data-id="'+id+'" aria-haspopup="listbox" aria-expanded="'+open+'" aria-label="Escolher competência"><span>'+esc(mesAno(sel))+'</span><span class="chev-wrap">'+I.chev+'</span></button>';
+  if(big)h+='<button type="button" class="comp-step" data-act="compstep" data-v="'+id+'" data-dir="1" aria-label="Próximo mês">'+I.chevR+'</button>';
+  h+=(open?'<div class="compdd-list" role="listbox" aria-label="Escolher competência">'+items+'</div>':'');
+  return h+'</div>';
 }
 function monthOptions(sel,from,to,allowEmpty){
   const B=compPadrao();let h=allowEmpty?'<option value=""'+(!sel?' selected':'')+'>Sem data de fim</option>':'';
@@ -569,7 +581,7 @@ function vInicio(){
   else if(livre>0)porDia='≈ R$ '+brl0(livre/dias)+'/dia até '+ddmm(fim);
   else porDia='Passou R$ '+brl0(-livre)+' do que cabe';
   const MNS=mesNome(c);
-  let h=head(compOptions(c,'comp-select','comp-inicio',true),
+  let h=head(compTrigger(c,'comp-inicio',true),
     '<button class="icon-btn" data-act="tab" data-v="ajustes" aria-label="Ajustes">'+I.gear+'</button>');
   h+='<div class="dash">';
   if(S.exemplo)h+='<div class="banner a-banner"><span>Simulação com dados de exemplo</span><button class="link" data-act="tab" data-v="ajustes">Ajustar</button></div>';
@@ -644,7 +656,7 @@ function metasBloco(c,limit,editavel){
 /* ───────── Lançamentos ───────── */
 function vLanc(){
   const c=ui.comp,o=occs(c),t=totais(c);
-  let h=head('Lançamentos','<span style="margin-top:22px">'+compOptions(c,'pill-select','comp-lanc')+'</span>');
+  let h=head('Lançamentos','<span style="margin-top:22px">'+compTrigger(c,'comp-lanc')+'</span>');
   h+='<div class="wrap" style="display:flex;justify-content:space-between;align-items:center;margin:4px 0 12px"><span class="note">Tudo que cai em '+mesNome(c)+'</span><span class="mono" style="font-size:12px"><span style="color:var(--accent)">+'+brl0(t.ent)+'</span> &nbsp; −'+brl0(t.saidas)+'</span></div>';
   const F=[['todos','Todos'],['gasto','Gastos'],['parcela','Parcelas'],['fixo','Fixos'],['entrada','Entradas']];
   h+='<div class="chips">'+F.map(([k,l])=>'<button class="chip'+(ui.filtro===k?' on':'')+'" data-act="filtro" data-v="'+k+'">'+l+'</button>').join('')+'</div>';
@@ -666,7 +678,7 @@ function vFat(){
   const fats=S.cards.map(cd=>fatura(cd,c));
   if(!ui.fatCard||!cardById(ui.fatCard)){const f=fats.find(x=>x.total>0)||fats[0];ui.fatCard=f?f.card.id:null;}
   const total=fats.reduce((a,f)=>a+f.total,0),comValor=fats.filter(f=>f.total>0),pagas=comValor.filter(f=>f.paga).length;
-  let h=head('Faturas','<span style="margin-top:22px">'+compOptions(c,'pill-select','comp-fat')+'</span>');
+  let h=head('Faturas','<span style="margin-top:22px">'+compTrigger(c,'comp-fat')+'</span>');
   h+='<div class="wrap stack" style="margin-top:8px"><div class="panel" style="display:flex;justify-content:space-between;align-items:center;gap:10px"><div style="display:flex;flex-direction:column;gap:4px"><span class="note" style="font-weight:600">Faturas que vencem em '+mesNome(c)+'</span><span class="mono" style="font-size:24px">R$ '+brl(total)+'</span></div>'+
      '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px"><span style="font-size:12px;font-weight:700;color:'+(pagas===comValor.length&&comValor.length?'var(--accent)':'var(--warn-ink)')+'">'+pagas+' de '+comValor.length+' pagas</span><span style="display:flex;gap:4px">'+comValor.map(f=>'<i style="display:block;width:14px;height:6px;border-radius:3px;background:'+(f.paga?'var(--accent)':'var(--track)')+'"></i>').join('')+'</span></div></div></div>';
   if(!S.cards.length)return h+'<div class="wrap"><div class="empty">Cadastre um cartão em Ajustes.</div></div>';
@@ -691,7 +703,7 @@ function vFat(){
 /* ───────── Planejar ───────── */
 function vPlan(){
   const c=ui.comp,B=compPadrao();
-  let h=head('Planejamento','<span style="margin-top:22px">'+compOptions(c,'pill-select','comp-plan')+'</span>');
+  let h=head('Planejamento','<span style="margin-top:22px">'+compTrigger(c,'comp-plan')+'</span>');
   h+='<div class="wrap stack" style="margin-top:8px"><p class="note" style="margin:0">O que se repete, o que termina e o que vocês guardam.</p>';
   const ent=S.lanc.filter(L=>L.tipo==='entrada').sort((a,b)=>a.dia-b.dia),fix=S.lanc.filter(L=>L.tipo==='fixo').sort((a,b)=>a.dia-b.dia);
   h+='<section class="panel" style="padding:14px 16px 6px"><div class="panel-h"><span class="panel-t">Entradas</span><button class="link" data-act="novo" data-tipo="entrada">+ Adicionar</button></div>';
@@ -845,6 +857,7 @@ document.addEventListener('click',e=>{
   switch(a){
     case 'compopen': ui.compOpenId=(ui.compOpenId===el.dataset.id)?null:el.dataset.id;render(true);break;
     case 'compset': ui.comp=el.dataset.v;ui.compOpenId=null;render(true);break;
+    case 'compstep': ui.comp=addM(ui.comp,parseInt(el.dataset.dir,10));ui.compOpenId=null;render(true);break;
     case 'tab': ui.tab=el.dataset.v;ui.confirm=null;ui.compOpenId=null;render();window.scrollTo(0,0);break;
     case 'novo': openForm(null,el.dataset.tipo);break;
     case 'edit': {const L=S.lanc.find(x=>x.id===+el.dataset.id);if(L)openForm(L);break;}
