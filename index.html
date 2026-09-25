@@ -317,7 +317,7 @@ function vencDaFatura(card,comp){const r=rawComp(card,comp);const [y,m]=parts(r)
 const KEY='nossobolso.v1';
 const CATS=['Mercado','Fralda','Leite','Gasolina','Farmácia','Transporte','Saúde','Lazer','Casa','Compras','Educação','Assinaturas','Impostos','Seguros','Outros'];
 let S=null;
-const ui={tab:'inicio',comp:null,filtro:'todos',fatCard:null,confirm:null,form:null,compOpenId:null};
+const ui={tab:'inicio',comp:null,filtro:'todos',fatCard:null,confirm:null,form:null,compOpenId:null,sim:null};
 
 function seed(){
   const cards=[
@@ -684,6 +684,53 @@ function painelDisponibilidade(base,n){
   h+='</div><p class="note" style="margin:10px 0 0;font-weight:700;color:'+(piores?'var(--warn-ink)':'var(--accent)')+'">'+nota+'</p></section>';
   return h;
 }
+/* ───────── simulador de parcelamento (não lança nada de verdade, só projeta) ───────── */
+function simParcelaValor(sim,comp){
+  if(!sim)return 0;const val=num(sim.valor),n=Math.max(1,parseInt(sim.n)||1);
+  if(!(val>0))return 0;
+  const card=cardById(sim.conta);
+  const f1=card?faturaDe(card,sim.data||HOJE):(sim.data||HOJE).slice(0,7);
+  const i=diffM(f1,comp);
+  return (i>=0&&i<n)?val:0;
+}
+function simResultsHtml(){
+  const s=readSim();const val=num(s.valor),n=Math.max(1,parseInt(s.n)||1);
+  if(!(val>0))return '';
+  const card=cardById(s.conta);
+  const f1=card?faturaDe(card,s.data||HOJE):(s.data||HOJE).slice(0,7);
+  const B=compPadrao();
+  let h='<div class="preview" style="margin-top:12px">+'+n+'× de R$ '+brl(val)+' &nbsp;·&nbsp; '+brl0(val*n)+' no total<small>1ª parcela na fatura de '+mesAno(f1)+' do '+esc(card?card.nome:'Conta/Pix')+' · última em '+mesAno(addM(f1,n-1))+'</small></div>';
+  const vals=[];for(let k=0;k<12;k++){const m=addM(B,k);vals.push([m,parcelasPorComp(m),simParcelaValor(s,m)]);}
+  const max=Math.max(...vals.map(v=>v[1]+v[2]),1);
+  h+='<div class="bars" role="img" aria-label="Parcelas por mês, com e sem a simulação" style="margin-top:14px">';
+  vals.forEach(([m,base,add])=>{
+    const hb=Math.max(0,base/max*82),ha=Math.max(0,add/max*82);
+    const tot=base+add;
+    h+='<div class="col"><span class="bv'+(add>0?' neg':'')+'">'+(tot?k1(tot):'—')+'</span><span class="b" style="height:'+Math.max(3,hb+ha).toFixed(0)+'px;padding:0;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;background:none">'+
+      (ha>0?'<span style="display:block;width:100%;height:'+ha.toFixed(0)+'px;background:var(--warn-2)"></span>':'')+
+      '<span style="display:block;width:100%;height:'+hb.toFixed(0)+'px;background:var(--calm)"></span></span>'+
+      '<span class="bl">'+mesCurto(m).slice(0,3)+'</span></div>';
+  });
+  h+='</div><p class="note" style="margin:6px 0 0"><i class="dot" style="display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--calm);margin-right:5px"></i>Parcelas de hoje &nbsp; <i class="dot" style="display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--warn-2);margin-right:5px"></i>Com essa compra</p>';
+  const afetados=vals.filter(v=>v[2]>0);
+  if(afetados.length){
+    const comImpacto=afetados.map(([m])=>({m,depois:livreComMetas(m)-val}));
+    const pior=comImpacto.reduce((a,b)=>b.depois<a.depois?b:a,comImpacto[0]);
+    h+='<p class="note" style="margin:10px 0 0;font-weight:700;color:'+(pior.depois<0?'var(--warn-ink)':'var(--ink-2)')+'">De '+mesCurto(afetados[0][0])+' a '+mesCurto(afetados[afetados.length-1][0])+', sobra R$ '+brl0(val)+'/mês a menos. Pior caso: '+mesCurto(pior.m)+' fica com R$ '+brl0(pior.depois)+' livre'+(pior.depois<0?' — entra no vermelho':'')+'.</p>';
+  }
+  return h;
+}
+function painelSimulacao(){
+  const s=ui.sim||{valor:'',n:3,conta:(S.cards[0]||{}).id||'conta',data:HOJE};
+  let h='<section class="panel"><div class="panel-h"><span class="panel-t">Simular parcelamento</span><button class="link" data-act="simclear">Limpar</button></div>'+
+    '<p class="note" style="margin:0 0 10px">Testa uma compra parcelada sem lançar de verdade — só pra ver o impacto nas parcelas e na sua disponibilidade dos próximos meses.</p>'+
+    '<div class="frow"><div class="field"><label for="sim-valor">Valor da parcela (R$)</label><input class="inp money" id="sim-valor" data-act="sim" inputmode="decimal" placeholder="0,00" value="'+esc(s.valor)+'"></div>'+
+    '<div class="field"><label for="sim-n">Nº de parcelas</label><input class="inp num" type="number" min="1" max="48" id="sim-n" data-act="sim" value="'+esc(s.n)+'"></div></div>'+
+    '<div class="frow"><div class="field"><label for="sim-conta">Cartão</label><select class="inp" id="sim-conta" data-act="sim">'+contaOptions(s.conta)+'</select></div>'+
+    '<div class="field"><label for="sim-data">Data da compra</label><input class="inp" type="date" id="sim-data" data-act="sim" value="'+esc(s.data)+'"></div></div>'+
+    '<div id="sim-results">'+(ui.sim?simResultsHtml():'')+'</div></section>';
+  return h;
+}
 function gastoPorCat(c){const g={};occs(c).forEach(x=>{if(x.kind==='gasto'){const k=x.L.cat||'Outros';g[k]=(g[k]||0)+x.valor;}});return g;}
 function metasBloco(c,limit,editavel){
   const g=gastoPorCat(c);
@@ -752,6 +799,7 @@ function vPlan(){
   let h=head('Planejamento','<span style="margin-top:22px">'+compTrigger(c,'comp-plan')+'</span>');
   h+='<div class="wrap stack" style="margin-top:8px"><p class="note" style="margin:0">O que se repete, o que termina e o que vocês guardam.</p>';
   h+=painelDisponibilidade(B,12);
+  h+=painelSimulacao();
   const ent=S.lanc.filter(L=>L.tipo==='entrada').sort((a,b)=>a.dia-b.dia),fix=S.lanc.filter(L=>L.tipo==='fixo').sort((a,b)=>a.dia-b.dia);
   h+='<section class="panel" style="padding:14px 16px 6px"><div class="panel-h"><span class="panel-t">Entradas</span><button class="link" data-act="novo" data-tipo="entrada">+ Adicionar</button></div>';
   h+=ent.length?ent.map(L=>'<button class="row" data-act="edit" data-id="'+L.id+'"><span class="av in" style="border-radius:10px;width:40px;height:40px;flex-direction:column;line-height:1;font-family:var(--f-mono);font-size:14px"><span style="font-size:8px;font-family:var(--f-body);letter-spacing:.3px">DIA</span>'+p2(L.dia)+'</span><span class="grow"><span class="t">'+esc(L.desc)+'</span><span class="s">'+(L.fim?(L.fim===L.inicio?'Só em '+mesCurto(L.inicio):mesCurto(L.inicio)+' → '+mesCurto(L.fim)+(L.fim>=B?' · termina em '+(diffM(B,L.fim)+1)+' mês(es)':' · encerrada')):'Todo mês')+'</span></span><span class="v pos">'+brl0(L.valor)+'</span></button>').join(''):'<div class="empty">Nenhuma entrada.</div>';
@@ -920,6 +968,7 @@ document.addEventListener('click',e=>{
     case 'fsave': saveForm(!!el.dataset.novo);break;
     case 'fdel': if(ui.confirm!=='del'){ui.confirm='del';readForm();renderSheet();}else{S.lanc=S.lanc.filter(x=>x.id!==ui.form.editId);save();ui.form=null;ui.confirm=null;renderSheet();render(true);toast('Lançamento excluído');}break;
     case 'addmeta': {const s=document.getElementById('nova-meta-cat');if(s){S.metas[s.value]=500;save();render(true);}break;}
+    case 'simclear': ui.sim=null;render(true);break;
     case 'addcard': {const id='c'+(S.nid++);S.cards.push({id,nome:'Novo cartão',fecha:10,vence:20});save();render(true);break;}
     case 'delcard': {const id=el.dataset.id;if(ui.confirm!=='card-'+id){ui.confirm='card-'+id;render(true);}else{S.cards=S.cards.filter(c=>c.id!==id);S.lanc.forEach(L=>{if(L.conta===id){L.conta='conta';delete L.fatura1;}});ui.confirm=null;save();render(true);toast('Cartão removido');}break;}
     case 'quem': S.quem=el.dataset.v;save();render(true);break;
@@ -936,9 +985,26 @@ document.addEventListener('change',e=>{
     if(k==='nome')c.nome=el.value.trim()||c.nome;else{const d=Math.min(31,Math.max(1,parseInt(el.value)||1));c[k]=d;}
     S.lanc.forEach(L=>{if(L.conta===c.id&&k!=='nome')delete L.fatura1;});save();render(true);toast('Cartão atualizado');}
   else if(a==='fin'){readForm();if(el.id==='f-freq'){renderSheet();return;}const p=document.getElementById('f-preview');if(p)p.innerHTML=previewTxt();}
+  else if(a==='sim'){atualizarSim();}
 });
+function atualizarSim(){
+  // nunca refaz o formulário inteiro aqui — só o bloco de resultados, senão perde o foco a cada tecla.
+  readSim();
+  const r=document.getElementById('sim-results');if(r)r.innerHTML=simResultsHtml();
+}
+function readSim(){
+  ui.sim=ui.sim||{valor:'',n:3,conta:(S.cards[0]||{}).id||'conta',data:HOJE};
+  const g=id=>{const e=document.getElementById(id);return e?e.value:undefined;};
+  const v=g('sim-valor');if(v!==undefined)ui.sim.valor=v;
+  const n=g('sim-n');if(n!==undefined)ui.sim.n=n;
+  const c=g('sim-conta');if(c!==undefined)ui.sim.conta=c;
+  const d=g('sim-data');if(d!==undefined)ui.sim.data=d;
+  return ui.sim;
+}
 document.addEventListener('input',e=>{
-  const el=e.target;if(!el.dataset||el.dataset.act!=='fin')return;
+  const el=e.target;if(!el.dataset)return;
+  if(el.dataset.act==='sim'){atualizarSim();return;}
+  if(el.dataset.act!=='fin')return;
   readForm();
   if(el.id==='f-desc'&&!ui.form.editId){const s=sugereCat(el.value);const sel=document.getElementById('f-cat');if(s&&sel&&sel.value!==s){sel.value=s;ui.form.cat=s;}}
   const p=document.getElementById('f-preview');if(p)p.innerHTML=previewTxt();
