@@ -712,11 +712,26 @@ function simResultsHtml(){
       '<span class="bl">'+mesCurto(m).slice(0,3)+'</span></div>';
   });
   h+='</div><p class="note" style="margin:6px 0 0"><i class="dot" style="display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--calm);margin-right:5px"></i>Parcelas de hoje &nbsp; <i class="dot" style="display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--warn-2);margin-right:5px"></i>Com essa compra</p>';
+  // impacto no "livre para gastar" (com metas) mês a mês
+  const livres=vals.map(([m])=>({m,antes:livreComMetas(m),depois:livreComMetas(m)-simParcelaValor(s,m)}));
+  const maxL=Math.max(...livres.map(v=>Math.max(Math.abs(v.antes),Math.abs(v.depois))),1);
+  h+='<div class="panel-h" style="margin:16px 0 4px"><span class="panel-t" style="font-size:13px">Impacto no livre para gastar</span></div>'+
+    '<div class="bars" role="img" aria-label="Livre para gastar por mês, antes e depois da compra">';
+  livres.forEach(({m,antes,depois})=>{
+    const ha=Math.max(3,Math.abs(antes)/maxL*82),hd=Math.max(3,Math.abs(depois)/maxL*82);
+    const colD=depois<0?'var(--warn)':'var(--accent)';
+    h+='<div class="col"><span class="bv'+(depois<antes?' neg':'')+'" style="font-size:9px">'+(depois<0?'−':'')+k1(Math.abs(depois))+'</span>'+
+      '<span class="b" style="display:flex;gap:2px;align-items:flex-end;justify-content:center;height:'+Math.max(ha,hd).toFixed(0)+'px;background:none;padding:0">'+
+      '<span style="display:block;flex:1;max-width:8px;height:'+ha.toFixed(0)+'px;border-radius:4px 4px 1px 1px;background:var(--line)"></span>'+
+      '<span style="display:block;flex:1;max-width:8px;height:'+hd.toFixed(0)+'px;border-radius:4px 4px 1px 1px;background:'+colD+'"></span></span>'+
+      '<span class="bl">'+mesCurto(m).slice(0,3)+'</span></div>';
+  });
+  h+='</div><p class="note" style="margin:6px 0 0"><i class="dot" style="display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--line);margin-right:5px"></i>Livre hoje &nbsp; <i class="dot" style="display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--accent);margin-right:5px"></i>Livre com essa compra</p>';
   const afetados=vals.filter(v=>v[2]>0);
   if(afetados.length){
-    const comImpacto=afetados.map(([m])=>({m,depois:livreComMetas(m)-val}));
+    const comImpacto=livres.filter(v=>v.depois!==v.antes);
     const pior=comImpacto.reduce((a,b)=>b.depois<a.depois?b:a,comImpacto[0]);
-    h+='<p class="note" style="margin:10px 0 0;font-weight:700;color:'+(pior.depois<0?'var(--warn-ink)':'var(--ink-2)')+'">De '+mesCurto(afetados[0][0])+' a '+mesCurto(afetados[afetados.length-1][0])+', sobra R$ '+brl0(val)+'/mês a menos. Pior caso: '+mesCurto(pior.m)+' fica com R$ '+brl0(pior.depois)+' livre'+(pior.depois<0?' — entra no vermelho':'')+'.</p>';
+    h+='<p class="note" style="margin:10px 0 0;font-weight:700;color:'+(pior.depois<0?'var(--warn-ink)':'var(--ink-2)')+'">De '+mesCurto(afetados[0][0])+' a '+mesCurto(afetados[afetados.length-1][0])+', sobra R$ '+brl0(val)+'/mês a menos. Pior caso: '+mesCurto(pior.m)+' fica com R$ '+brl0(pior.depois)+' livre (era '+brl0(pior.antes)+')'+(pior.depois<0?' — entra no vermelho':'')+'.</p>';
   }
   return h;
 }
