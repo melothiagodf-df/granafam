@@ -234,6 +234,10 @@ button{cursor:pointer}
 textarea.inp{height:auto;min-height:70px;padding:10px 12px;resize:vertical}
 .inp.money{font-family:var(--f-mono);font-size:20px}
 .frow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.imp-list{display:flex;flex-direction:column;gap:10px;max-height:50vh;overflow-y:auto;padding-right:2px}
+.imp-row{border:1px solid var(--line);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:8px}
+.imp-row.dup{opacity:.6}
+.imp-check{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600}
 .preview{background:var(--accent-soft);color:var(--accent);border-radius:12px;padding:12px 14px;font-size:13px;font-weight:600;line-height:1.45}
 .preview small{display:block;font-weight:500;opacity:.85;margin-top:2px}
 .btns{display:flex;gap:8px}
@@ -277,6 +281,7 @@ textarea.inp{height:auto;min-height:70px;padding:10px 12px;resize:vertical}
 
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script>
 (function(){
 'use strict';
@@ -317,7 +322,7 @@ function vencDaFatura(card,comp){const r=rawComp(card,comp);const [y,m]=parts(r)
 const KEY='nossobolso.v1';
 const CATS=['Mercado','Fralda','Leite','Gasolina','Farmácia','Transporte','Saúde','Lazer','Casa','Compras','Educação','Assinaturas','Impostos','Seguros','Outros'];
 let S=null;
-const ui={tab:'inicio',comp:null,filtro:'todos',fatCard:null,confirm:null,form:null,compOpenId:null,sim:null};
+const ui={tab:'inicio',comp:null,filtro:'todos',fatCard:null,confirm:null,form:null,compOpenId:null,sim:null,imp:null};
 
 function seed(){
   const cards=[
@@ -545,6 +550,121 @@ function sugereCat(desc){
   for(const [re,c] of R)if(re.test(d))return c;return null;
 }
 
+// lê o texto extraído da imagem e tenta reconhecer dois padrões de tela comuns:
+// A) lista de fatura: "Loja R$ 12,34" seguido, na linha de baixo, de "DD/MM/AAAA às HH:MM"
+// B) "últimos lançamentos" (tela inicial): cabeçalhos "DD Mês" + nomes de loja + valores numa lista à parte
+const IMP_MESES3={jan:1,fev:2,mar:3,abr:4,mai:5,jun:6,jul:7,ago:8,set:9,out:10,nov:11,dez:12};
+const IMP_IGNORAR=/^(inicio|início|faturas|shopping|total|virtual|infinite)$/i;
+const IMP_PREFIXO_RUIDO=/^(in[ií]cio|ultimos|últimos|faturas|shopping)\b/i;
+const IMP_RUIDO_SUBSTR=/virtual|infinite|lan.?amentos/i;
+function impLimparLinhas(texto){return texto.split('\n').map(l=>l.trim()).filter(l=>l.length>0);}
+function impPatternA(linhas){
+  const out=[];
+  const reValLinha=/^(.*?)\s*R[\$s]\s*([\d.,]+)\s*$/i;
+  const reData=/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})\s+(?:às|as)\s+(\d{1,2}):(\d{2})/i;
+  for(let i=0;i<linhas.length;i++){
+    const m=linhas[i].match(reValLinha);
+    if(!m)continue;
+    const desc=m[1].trim();
+    if(!desc||desc.length<2||IMP_IGNORAR.test(desc)||IMP_PREFIXO_RUIDO.test(desc)||IMP_RUIDO_SUBSTR.test(desc))continue;
+    const valor=num(m[2]);
+    if(!(valor>0))continue;
+    let data=null;
+    for(let k=i+1;k<Math.min(i+3,linhas.length);k++){
+      const dm=linhas[k].match(reData);
+      if(dm){let [,d,mo,y]=dm;y=y.length===2?'20'+y:y;data=y+'-'+mo.padStart(2,'0')+'-'+d.padStart(2,'0');break;}
+    }
+    if(data)out.push({desc,valor,data});
+  }
+  return out;
+}
+function impPatternB(linhas,anoRef,mesRef){
+  const reHeader=/^(\d{1,2})\s+(jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez)\.?$/i;
+  const merchants=[];let primeiroHeader=null,curData=null;
+  for(const l of linhas){
+    const hm=l.match(reHeader);
+    if(hm){
+      const dia=parseInt(hm[1],10),mes=IMP_MESES3[hm[2].toLowerCase()];
+      let ano=anoRef;if(mesRef&&mes>mesRef)ano=anoRef-1;
+      curData=ano+'-'+String(mes).padStart(2,'0')+'-'+String(dia).padStart(2,'0');
+      if(!primeiroHeader)primeiroHeader=curData;
+      continue;
+    }
+    if(/^R[\$s]?\s*[\d.,]+$/i.test(l))continue;
+    if(IMP_IGNORAR.test(l)||IMP_PREFIXO_RUIDO.test(l)||IMP_RUIDO_SUBSTR.test(l))continue;
+    if(l.length<3)continue;
+    if(!/[a-zA-ZÀ-ÿ]{2}/.test(l))continue;
+    merchants.push({desc:l,data:primeiroHeader||curData});
+  }
+  const valores=[];
+  for(const l of linhas){const vm=l.match(/^R[\$s]?\s*([\d.,]+)\s*$/i);if(vm){const v=num(vm[1]);if(v>0)valores.push(v);}}
+  const out=[];const n=Math.min(merchants.length,valores.length);
+  for(let i=0;i<n;i++){if(!merchants[i].data)continue;out.push({desc:merchants[i].desc,valor:valores[i],data:merchants[i].data});}
+  return out;
+}
+function parseFaturaTexto(texto,hoje){
+  const linhas=impLimparLinhas(texto);
+  let out=impPatternA(linhas);
+  if(!out.length){const [ay,am]=hoje.split('-').map(Number);out=impPatternB(linhas,ay,am);}
+  return out;
+}
+function lancamentoDuplicado(data,valor){
+  return S.lanc.some(L=>(L.tipo==='gasto'||L.tipo==='parcelado')&&L.data===data&&Math.abs(L.valor-valor)<0.01);
+}
+async function processarImportacao(files){
+  ui.imp.step='lendo';ui.imp.erro=null;renderSheet();
+  if(typeof Tesseract==='undefined'){
+    ui.imp.step='inicio';ui.imp.erro='Não consegui carregar o leitor de imagem agora. Verifique sua internet e tente de novo.';
+    renderSheet();return;
+  }
+  let textoTotal='';
+  for(let i=0;i<files.length;i++){
+    const st=document.getElementById('imp-status');if(st)st.textContent='Lendo imagem '+(i+1)+' de '+files.length+'…';
+    try{const {data}=await Tesseract.recognize(files[i],'por');textoTotal+='\n'+data.text;}
+    catch(e){console.warn('OCR falhou numa imagem:',e);}
+  }
+  const achados=parseFaturaTexto(textoTotal,HOJE);
+  ui.imp.candidatos=achados.map(c=>{
+    const dup=lancamentoDuplicado(c.data,c.valor);
+    return {desc:c.desc,valor:c.valor,data:c.data,cat:sugereCat(c.desc)||'Compras',quem:S.quem,dup,on:!dup};
+  });
+  ui.imp.step='revisao';renderSheet();
+}
+function renderImportHtml(){
+  const imp=ui.imp;
+  let h='<div class="sheet-bg" data-act="closebg"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="imp-title"><span class="grab"></span>'+
+    '<div class="sheet-h"><h2 id="imp-title">Importar fatura (print)</h2><button class="icon-btn" data-act="impfechar" aria-label="Fechar">'+I.x+'</button></div>';
+  if(imp.step==='inicio'){
+    h+='<p class="note">Tire um print da sua fatura (ou da tela de últimos lançamentos) e envie aqui. A gente lê os lançamentos automaticamente pra você conferir antes de salvar.</p>';
+    h+='<div class="field"><label for="imp-conta">Cartão / conta</label><select class="inp" id="imp-conta" data-act="impconta">'+contaOptions(imp.conta)+'</select></div>';
+    h+='<div class="field"><label for="imp-file">Print(s) da fatura</label><input class="inp" type="file" id="imp-file" accept="image/*" multiple data-act="impfile"></div>';
+    if(imp.erro)h+='<p class="note" style="color:var(--warn-ink)">'+esc(imp.erro)+'</p>';
+  }else if(imp.step==='lendo'){
+    h+='<p class="note" id="imp-status" aria-live="polite">Lendo imagem…</p>';
+  }else if(imp.step==='revisao'){
+    const cands=imp.candidatos||[];
+    if(!cands.length){
+      h+='<p class="note">Não consegui identificar lançamentos nesse print. Tente outro print (de preferência a tela de fatura, com nome, data e valor de cada compra) ou lance manualmente.</p>';
+      h+='<div class="btns"><button class="btn" data-act="impvoltar">Tentar outro print</button></div>';
+    }else{
+      const nOn=cands.filter(c=>c.on).length;
+      h+='<p class="note">Encontrei '+cands.length+' lançamento(s). Os que já estavam lançados (mesma data e valor) vêm desmarcados. Confira, ajuste categoria/valor se precisar, e selecione o que quer importar.</p>';
+      h+='<div class="imp-list">'+cands.map((c,i)=>{
+        return '<div class="imp-row'+(c.dup?' dup':'')+'">'+
+          '<label class="imp-check"><input type="checkbox" data-act="impcheck" data-i="'+i+'"'+(c.on?' checked':'')+'> '+(c.dup?'<span class="tag">já lançado</span>':'')+'</label>'+
+          '<div class="frow"><div class="field"><label>Descrição</label><input class="inp" data-act="impcampo" data-i="'+i+'" data-k="desc" value="'+esc(c.desc)+'"></div>'+
+          '<div class="field"><label>Valor (R$)</label><input class="inp money" data-act="impcampo" data-i="'+i+'" data-k="valor" inputmode="decimal" value="'+esc(String(c.valor).replace('.',','))+'"></div></div>'+
+          '<div class="frow"><div class="field"><label>Data</label><input class="inp" type="date" data-act="impcampo" data-i="'+i+'" data-k="data" value="'+esc(c.data)+'"></div>'+
+          '<div class="field"><label>Categoria</label><select class="inp" data-act="impcampo" data-i="'+i+'" data-k="cat">'+CATS.map(cc=>'<option'+(c.cat===cc?' selected':'')+'>'+cc+'</option>').join('')+'</select></div></div>'+
+          '</div>';
+      }).join('')+'</div>';
+      h+='<div class="btns"><button class="btn" data-act="impvoltar">Tentar outro print</button><button class="btn primary" data-act="impsalvar">Lançar '+nOn+' selecionado(s)</button></div>';
+    }
+  }
+  h+='</div></div>';
+  return h;
+}
+
 /* ───────── pedaços de interface ───────── */
 const I={
   gear:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>',
@@ -768,6 +888,7 @@ function vLanc(){
   h+='<div class="wrap" style="display:flex;justify-content:space-between;align-items:center;margin:4px 0 12px"><span class="note">Tudo que cai em '+mesNome(c)+'</span><span class="mono" style="font-size:12px"><span style="color:var(--accent)">+'+brl0(t.ent)+'</span> &nbsp; −'+brl0(t.saidas)+'</span></div>';
   const F=[['todos','Todos'],['gasto','Gastos'],['parcela','Parcelas'],['fixo','Fixos'],['entrada','Entradas']];
   h+='<div class="chips">'+F.map(([k,l])=>'<button class="chip'+(ui.filtro===k?' on':'')+'" data-act="filtro" data-v="'+k+'">'+l+'</button>').join('')+'</div>';
+  h+='<div class="wrap" style="margin:8px 0 4px"><button class="link" data-act="impabrir" style="padding:2px 0">Importar fatura (print)</button></div>';
   const grupos=[['gasto','Gastos do dia a dia'],['parcela','Parcelas'],['fixo','Fixos'],['entrada','Entradas']];
   grupos.forEach(([k,l])=>{
     if(ui.filtro!=='todos'&&ui.filtro!==k)return;
@@ -895,6 +1016,7 @@ function previewTxt(){
 }
 function renderSheet(){
   const root=document.getElementById('sheet-root');
+  if(ui.imp){root.innerHTML=renderImportHtml();return;}
   if(!ui.form){root.innerHTML='';return;}
   const F=ui.form,ed=!!F.editId;
   const TIP=[['gasto','Gasto'],['parcelado','Parcelado'],['fixo','Fixo'],['entrada','Entrada']];
@@ -962,9 +1084,18 @@ document.addEventListener('click',e=>{
   if(ui.compOpenId&&!e.target.closest('.compdd')){ui.compOpenId=null;render(true);}
   const el=e.target.closest('[data-act]');if(!el)return;
   const a=el.dataset.act;
-  if(a==='closebg'){if(e.target===el){ui.form=null;renderSheet();}return;}
+  if(a==='closebg'){if(e.target===el){ui.form=null;ui.imp=null;renderSheet();}return;}
   if(el.tagName==='SELECT'||el.tagName==='INPUT'||el.tagName==='TEXTAREA')return;
   switch(a){
+    case 'impabrir': ui.imp={step:'inicio',conta:(S.cards[0]||{}).id||'conta',erro:null,candidatos:[]};renderSheet();break;
+    case 'impfechar': ui.imp=null;renderSheet();break;
+    case 'impvoltar': ui.imp.step='inicio';ui.imp.erro=null;ui.imp.candidatos=[];renderSheet();break;
+    case 'impsalvar': {
+      const sel=(ui.imp.candidatos||[]).filter(c=>c.on);
+      sel.forEach(c=>{S.lanc.push({id:S.nid++,tipo:'gasto',desc:(c.desc||'Compra').trim(),valor:num(c.valor),conta:ui.imp.conta,data:c.data||HOJE,cat:c.cat||'Compras',quem:c.quem||S.quem});});
+      save();ui.imp=null;renderSheet();render(true);toast(sel.length+' lançamento(s) importado(s)');
+      break;
+    }
     case 'compopen': ui.compOpenId=(ui.compOpenId===el.dataset.id)?null:el.dataset.id;render(true);break;
     case 'compset': ui.comp=el.dataset.v;ui.compOpenId=null;render(true);break;
     case 'compstep': ui.comp=addM(ui.comp,parseInt(el.dataset.dir,10));ui.compOpenId=null;render(true);break;
@@ -1001,6 +1132,10 @@ document.addEventListener('change',e=>{
     S.lanc.forEach(L=>{if(L.conta===c.id&&k!=='nome')delete L.fatura1;});save();render(true);toast('Cartão atualizado');}
   else if(a==='fin'){readForm();if(el.id==='f-freq'){renderSheet();return;}const p=document.getElementById('f-preview');if(p)p.innerHTML=previewTxt();}
   else if(a==='sim'){atualizarSim();}
+  else if(a==='impconta'){ui.imp.conta=el.value;}
+  else if(a==='impfile'){if(el.files&&el.files.length)processarImportacao(Array.from(el.files));}
+  else if(a==='impcheck'){const i=+el.dataset.i;const c=ui.imp.candidatos[i];if(c){c.on=el.checked;renderSheet();}}
+  else if(a==='impcampo'&&el.tagName==='SELECT'){const i=+el.dataset.i;const c=ui.imp.candidatos[i];if(c)c[el.dataset.k]=el.value;}
 });
 function atualizarSim(){
   // nunca refaz o formulário inteiro aqui — só o bloco de resultados, senão perde o foco a cada tecla.
@@ -1019,13 +1154,14 @@ function readSim(){
 document.addEventListener('input',e=>{
   const el=e.target;if(!el.dataset)return;
   if(el.dataset.act==='sim'){atualizarSim();return;}
+  if(el.dataset.act==='impcampo'){const i=+el.dataset.i;const c=ui.imp&&ui.imp.candidatos[i];if(c)c[el.dataset.k]=el.value;return;}
   if(el.dataset.act!=='fin')return;
   readForm();
   if(el.id==='f-desc'&&!ui.form.editId){const s=sugereCat(el.value);const sel=document.getElementById('f-cat');if(s&&sel&&sel.value!==s){sel.value=s;ui.form.cat=s;}}
   const p=document.getElementById('f-preview');if(p)p.innerHTML=previewTxt();
   const err=document.getElementById('f-erro');if(err)err.hidden=true;
 });
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&ui.form){ui.form=null;renderSheet();}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&(ui.form||ui.imp)){ui.form=null;ui.imp=null;renderSheet();}});
 
 load();ui.comp=compPadrao();render();
 startFirebaseSync();
