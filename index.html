@@ -321,6 +321,9 @@ function vencDaFatura(card,comp){const r=rawComp(card,comp);const [y,m]=parts(r)
 /* ───────── estado ───────── */
 const KEY='nossobolso.v1';
 const CATS=['Mercado','Fralda','Leite','Gasolina','Farmácia','Transporte','Saúde','Lazer','Casa','Compras','Educação','Assinaturas','Impostos','Seguros','Outros'];
+// regra 60/10/10/20 (@casalricozen): divide a renda em 4 blocos.
+const QUADRANTES=[['vida','Estilo de Vida',.60],['parcelas','Parcelas',.10],['depois','Viver o Depois',.10],['agora','Viver o Agora',.20]];
+const QUAD_POR_CAT={Mercado:'vida',Fralda:'vida',Leite:'vida',Gasolina:'vida','Farmácia':'vida',Transporte:'vida','Saúde':'vida',Casa:'vida',Educação:'vida',Impostos:'vida',Seguros:'vida',Lazer:'agora',Compras:'agora',Assinaturas:'agora',Outros:'agora'};
 let S=null;
 const ui={tab:'inicio',comp:null,filtro:'todos',fatCard:null,confirm:null,form:null,compOpenId:null,sim:null,imp:null};
 
@@ -542,6 +545,28 @@ function pagaCom(venc){
   return best;
 }
 function parcelasPorComp(c){return occs(c).filter(x=>x.kind==='parcela').reduce((a,x)=>a+x.valor,0);}
+function quadranteDe(L){if(L.tipo==='parcelado')return 'parcelas';return L.quadrante||QUAD_POR_CAT[L.cat]||'agora';}
+function quadranteTotais(comp){
+  const t={vida:0,parcelas:0,depois:0,agora:0};
+  occs(comp).forEach(x=>{
+    if(x.kind==='gasto'||x.kind==='fixo'){const q=quadranteDe(x.L);t[q]=(t[q]||0)+x.valor;}
+    else if(x.kind==='parcela'){t.parcelas+=x.valor;}
+  });
+  t.depois+=(S.reserva.mensal||0); // a reserva mensal é a parte de "Viver o Depois" que já existe no app
+  return t;
+}
+function painelRegra601010(comp){
+  const renda=totais(comp).ent,q=quadranteTotais(comp);
+  let h='<section class="panel"><div class="panel-h"><span class="panel-t">Regra 60/10/10/20</span></div>'+
+    '<p class="note" style="margin:0 0 10px">Como a renda de '+mesNome(comp)+' (R$ '+brl0(renda)+') se divide nos 4 blocos. A reserva mensal já conta em "Viver o Depois"; parcelas contam automaticamente no bloco de Parcelas.</p>';
+  QUADRANTES.forEach(([k,label,pct])=>{
+    const lim=renda*pct,v=q[k]||0,r=lim?v/lim:(v>0?2:0);
+    const cls=r>1?' alert over':r>=.8?' alert':'';
+    const txt=brl0(v)+' / '+brl0(lim)+(r>1?' · passou '+brl0(v-lim):(r>=.8?' · '+Math.round(r*100)+'%':''));
+    h+='<div class="meta'+cls+'"><div class="l"><span>'+label+' ('+Math.round(pct*100)+'%)</span><span class="mono">'+txt+'</span></div><div class="track"><i style="width:'+Math.min(100,r*100).toFixed(0)+'%"></i></div></div>';
+  });
+  return h+'</section>';
+}
 function sugereCat(desc){
   const d=desc.toLowerCase();
   const R=[[/fralda|pampers|huggies|lenço/,'Fralda'],[/leite|nan\b|aptamil|fórmula|formula/,'Leite'],[/mercado|super|atacad|feira|padaria|hortifruti/,'Mercado'],
@@ -934,6 +959,7 @@ function vPlan(){
   const c=ui.comp,B=compPadrao();
   let h=head('Planejamento','<span style="margin-top:22px">'+compTrigger(c,'comp-plan')+'</span>');
   h+='<div class="wrap stack" style="margin-top:8px"><p class="note" style="margin:0">O que se repete, o que termina e o que vocês guardam.</p>';
+  h+=painelRegra601010(c);
   h+=painelDisponibilidade(B,12);
   h+=painelSimulacao();
   const ent=S.lanc.filter(L=>L.tipo==='entrada').sort((a,b)=>a.dia-b.dia),fix=S.lanc.filter(L=>L.tipo==='fixo').sort((a,b)=>a.dia-b.dia);
@@ -979,15 +1005,16 @@ function vAjustes(){
 function openForm(L,tipo){
   ui.confirm=null;
   const B=compPadrao();
-  ui.form=L?JSON.parse(JSON.stringify(L)):{tipo:tipo||'gasto',desc:'',valor:'',conta:(S.cards[0]||{}).id||'conta',data:HOJE,cat:'Mercado',quem:S.quem,n:3,modo:'total',dia:10,inicio:B,fim:'',freq:'mensal',nmeses:3,valoresTxt:''};
+  ui.form=L?JSON.parse(JSON.stringify(L)):{tipo:tipo||'gasto',desc:'',valor:'',conta:(S.cards[0]||{}).id||'conta',data:HOJE,cat:'Mercado',quadrante:QUAD_POR_CAT['Mercado'],quem:S.quem,n:3,modo:'total',dia:10,inicio:B,fim:'',freq:'mensal',nmeses:3,valoresTxt:''};
   if(L){ui.form.editId=L.id;ui.form.modo='parcela';ui.form.valoresTxt=L.valores?L.valores.map(v=>String(v).replace('.',',')).join('; '):'';
+    ui.form.quadrante=quadranteDe(L);
     if(L.tipo==='entrada'){ui.form.freq=!L.fim?'mensal':(L.fim===L.inicio?'unica':'n');ui.form.nmeses=L.fim?diffM(L.inicio,L.fim)+1:3;}
     ui.form.fim=L.fim||'';ui.form.dia=L.dia||10;ui.form.inicio=L.inicio||B;}
   renderSheet();
 }
 function readForm(){
   const F=ui.form,g=id=>{const e=document.getElementById(id);return e?e.value:undefined;};
-  ['desc','conta','data','cat','dia','inicio','fim','n','freq','nmeses','valoresTxt'].forEach(k=>{const v=g('f-'+k);if(v!==undefined)F[k]=v;});
+  ['desc','conta','data','cat','quadrante','dia','inicio','fim','n','freq','nmeses','valoresTxt'].forEach(k=>{const v=g('f-'+k);if(v!==undefined)F[k]=v;});
   const v=g('f-valor');if(v!==undefined)F.valor=v;
   return F;
 }
@@ -1007,7 +1034,16 @@ function previewTxt(){
     const n=vals?vals.length:Math.max(1,parseInt(F.n)||1);
     const vp=vals?vals[0]:(F.modo==='total'?val/n:val);
     const f1=F.fatura1&&F.editId?F.fatura1:(card?faturaDe(card,F.data||HOJE):(F.data||HOJE).slice(0,7));
-    return (vals?'Valores variam: '+vals.map(brl0).join(' → '):n+'× de R$ '+brl(vp||0))+'<small>1ª parcela na fatura de '+mesAno(f1)+' · última em '+mesAno(addM(f1,n-1))+'</small>';
+    let aviso='';
+    if(!F.editId){
+      let pior=null;
+      for(let i=0;i<n;i++){const m=addM(f1,i);const vMes=vals?(vals[i]!=null?vals[i]:vals[vals.length-1]):vp;
+        const renda=totais(m).ent,lim=renda*.10;if(!(lim>0))continue;
+        const novo=parcelasPorComp(m)+vMes;
+        if(novo>lim&&(!pior||(novo-lim)>(pior.novo-pior.lim)))pior={m,novo,lim};}
+      if(pior)aviso='<div class="note" style="color:var(--warn-ink);font-weight:700;margin-top:8px">Atenção: passa do limite de 10% em parcelas (regra 60/10/10/20) em '+mesNome(pior.m)+' — R$ '+brl0(pior.novo)+' de R$ '+brl0(pior.lim)+' permitido.</div>';
+    }
+    return (vals?'Valores variam: '+vals.map(brl0).join(' → '):n+'× de R$ '+brl(vp||0))+'<small>1ª parcela na fatura de '+mesAno(f1)+' · última em '+mesAno(addM(f1,n-1))+'</small>'+aviso;
   }
   if(F.tipo==='fixo'){return 'R$ '+brl(val)+' todo dia '+(parseInt(F.dia)||1)+(card?' no '+esc(card.nome):' na conta')+'<small>A partir de '+mesAno(F.inicio)+(F.fim?' até '+mesAno(F.fim):', sem data de fim')+'</small>';}
   if(F.tipo==='entrada'){const fim=F.freq==='mensal'?null:F.freq==='unica'?F.inicio:addM(F.inicio,Math.max(1,parseInt(F.nmeses)||1)-1);
@@ -1042,6 +1078,8 @@ function renderSheet(){
       (F.freq==='n'?'<div class="field"><label for="f-nmeses">Quantos meses</label><input class="inp num" type="number" min="1" max="60" id="f-nmeses" data-act="fin" value="'+esc(F.nmeses)+'"></div>':'<div></div>')+'</div>';
   }
   if(F.tipo!=='entrada')h+='<div class="frow"><div class="field"><label for="f-cat">Categoria</label><select class="inp" id="f-cat" data-act="fin">'+CATS.map(c=>'<option'+(F.cat===c?' selected':'')+'>'+c+'</option>').join('')+'</select></div><div class="field"><label>Quem</label><div class="segm two" style="padding:3px">'+[['T','Thiago'],['N','Nataly']].map(([k,l])=>'<button class="'+(F.quem===k?'on':'')+'" data-act="fquem" data-v="'+k+'" style="height:38px">'+l+'</button>').join('')+'</div></div></div>';
+  if(F.tipo==='gasto'||F.tipo==='fixo')h+='<div class="field"><label for="f-quadrante">Bloco (regra 60/10/10/20)</label><select class="inp" id="f-quadrante" data-act="fin">'+QUADRANTES.filter(q=>q[0]!=='parcelas').map(([k,l])=>'<option value="'+k+'"'+((F.quadrante||QUAD_POR_CAT[F.cat])===k?' selected':'')+'>'+l+'</option>').join('')+'</select></div>';
+  if(F.tipo==='parcelado')h+='<p class="note" style="margin:0">Essa compra conta automaticamente no bloco <b>Parcelas (10%)</b> da regra 60/10/10/20.</p>';
   h+='<div class="preview" id="f-preview" aria-live="polite">'+previewTxt()+'</div>';
   h+='<p class="note" id="f-erro" style="color:var(--warn-ink);margin:0" hidden></p>';
   h+='<div class="btns">'+(ed?'<button class="btn danger'+(ui.confirm==='del'?' arm':'')+'" data-act="fdel">'+(ui.confirm==='del'?'Excluir mesmo':'Excluir')+'</button>':'<button class="btn" data-act="fsave" data-novo="1">Salvar e novo</button>')+'<button class="btn primary" data-act="fsave">Salvar</button></div>';
@@ -1055,15 +1093,15 @@ function saveForm(novo){
   const vals=(F.tipo==='parcelado'&&F.valoresTxt.trim())?F.valoresTxt.split(/[;\n]+/).map(num).filter(x=>x>0):null;
   if(!vals&&!(val>0))return fail('Informe um valor maior que zero.');
   let L={id:F.editId||S.nid++,tipo:F.tipo,desc:F.desc.trim(),quem:F.quem||S.quem};
-  if(F.tipo==='gasto')Object.assign(L,{valor:val,conta:F.conta,data:F.data||HOJE,cat:F.cat});
+  if(F.tipo==='gasto')Object.assign(L,{valor:val,conta:F.conta,data:F.data||HOJE,cat:F.cat,quadrante:F.quadrante||QUAD_POR_CAT[F.cat]||'agora'});
   if(F.tipo==='parcelado'){const n=vals?vals.length:Math.max(1,parseInt(F.n)||1);
-    Object.assign(L,{conta:F.conta,data:F.data||HOJE,cat:F.cat,n,valores:vals,valor:vals?vals[0]:(F.modo==='total'?Math.round(val/n*100)/100:val)});
+    Object.assign(L,{conta:F.conta,data:F.data||HOJE,cat:F.cat,n,valores:vals,valor:vals?vals[0]:(F.modo==='total'?Math.round(val/n*100)/100:val),quadrante:'parcelas'});
     if(F.editId&&F.fatura1){const old=S.lanc.find(x=>x.id===F.editId);if(old&&old.data===L.data&&old.conta===L.conta)L.fatura1=F.fatura1;}}
-  if(F.tipo==='fixo')Object.assign(L,{valor:val,conta:F.conta,cat:F.cat,dia:Math.min(31,Math.max(1,parseInt(F.dia)||1)),inicio:F.inicio,fim:F.fim||null});
+  if(F.tipo==='fixo')Object.assign(L,{valor:val,conta:F.conta,cat:F.cat,dia:Math.min(31,Math.max(1,parseInt(F.dia)||1)),inicio:F.inicio,fim:F.fim||null,quadrante:F.quadrante||QUAD_POR_CAT[F.cat]||'agora'});
   if(F.tipo==='entrada'){const n=Math.max(1,parseInt(F.nmeses)||1);Object.assign(L,{valor:val,cat:'Renda',dia:Math.min(31,Math.max(1,parseInt(F.dia)||1)),inicio:F.inicio,fim:F.freq==='mensal'?null:F.freq==='unica'?F.inicio:addM(F.inicio,n-1)});}
   if(F.editId){const i=S.lanc.findIndex(x=>x.id===F.editId);S.lanc[i]=L;}else S.lanc.push(L);
   save();toast(F.editId?'Lançamento atualizado':'Lançamento salvo');
-  if(novo){const keep={tipo:F.tipo,conta:F.conta,data:F.data,quem:F.quem,cat:F.cat,modo:F.modo,inicio:F.inicio,dia:F.dia};openForm(null,F.tipo);Object.assign(ui.form,keep,{desc:'',valor:'',valoresTxt:''});renderSheet();render(true);setTimeout(()=>{const e=document.getElementById('f-desc');if(e)e.focus();},30);}
+  if(novo){const keep={tipo:F.tipo,conta:F.conta,data:F.data,quem:F.quem,cat:F.cat,quadrante:F.quadrante,modo:F.modo,inicio:F.inicio,dia:F.dia};openForm(null,F.tipo);Object.assign(ui.form,keep,{desc:'',valor:'',valoresTxt:''});renderSheet();render(true);setTimeout(()=>{const e=document.getElementById('f-desc');if(e)e.focus();},30);}
   else{ui.form=null;renderSheet();render();}
 }
 
@@ -1157,7 +1195,8 @@ document.addEventListener('input',e=>{
   if(el.dataset.act==='impcampo'){const i=+el.dataset.i;const c=ui.imp&&ui.imp.candidatos[i];if(c)c[el.dataset.k]=el.value;return;}
   if(el.dataset.act!=='fin')return;
   readForm();
-  if(el.id==='f-desc'&&!ui.form.editId){const s=sugereCat(el.value);const sel=document.getElementById('f-cat');if(s&&sel&&sel.value!==s){sel.value=s;ui.form.cat=s;}}
+  if(el.id==='f-desc'&&!ui.form.editId){const s=sugereCat(el.value);const sel=document.getElementById('f-cat');if(s&&sel&&sel.value!==s){sel.value=s;ui.form.cat=s;
+    const selQ=document.getElementById('f-quadrante');if(selQ&&QUAD_POR_CAT[s]){selQ.value=QUAD_POR_CAT[s];ui.form.quadrante=QUAD_POR_CAT[s];}}}
   const p=document.getElementById('f-preview');if(p)p.innerHTML=previewTxt();
   const err=document.getElementById('f-erro');if(err)err.hidden=true;
 });
